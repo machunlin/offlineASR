@@ -6,13 +6,24 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 
+import com.example.asr.config.AsrProperties;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
 /** 管理项目 temp 目录内单个请求的临时文件，禁止越界删除。 */
+@Component
 public class TemporaryAudioStorage {
 
     private final Path rootDirectory;
 
     public TemporaryAudioStorage(Path rootDirectory) {
         this.rootDirectory = rootDirectory.toAbsolutePath().normalize();
+    }
+
+    /** 生产环境固定从集中配置读取项目临时目录；Path 构造器仅供独立测试使用。 */
+    @Autowired
+    public TemporaryAudioStorage(AsrProperties properties) {
+        this(Path.of(properties.getTempDirectory()));
     }
 
     public Path createRequestDirectory(String requestId) throws IOException {

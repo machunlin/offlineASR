@@ -20,4 +20,12 @@ class AsrPropertiesTest {
 
         assertThrows(IllegalArgumentException.class, () -> properties.setThreads(0));
     }
+
+    @Test
+    void rejectsBlankModelAndTemporaryDirectories() {
+        AsrProperties properties = new AsrProperties();
+
+        assertThrows(IllegalArgumentException.class, () -> properties.setModelDirectory("  "));
+        assertThrows(IllegalArgumentException.class, () -> properties.setTempDirectory(""));
+    }
 }

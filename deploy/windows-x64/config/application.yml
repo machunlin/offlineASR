@@ -1,0 +1,11 @@
+server:
+  address: 127.0.0.1
+  port: 8080
+
+asr:
+  threads: 2
+  max-upload-mb: 50
+  max-duration-seconds: 600
+  decode-timeout-seconds: 60
+  inference-timeout-seconds: 120
+  queue-timeout-seconds: 5

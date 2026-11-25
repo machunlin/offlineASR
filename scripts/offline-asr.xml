@@ -1,0 +1,18 @@
+<service>
+  <id>offline-asr</id>
+  <name>Offline ASR</name>
+  <description>本机离线中文语音识别服务</description>
+  <executable>%BASE%\..\jdk\bin\java.exe</executable>
+  <arguments>-jar "%BASE%\..\app\offline-asr.jar" --spring.config.additional-location="file:%BASE%\..\config\application.yml"</arguments>
+  <workingdirectory>%BASE%\..</workingdirectory>
+  <env name="ASR_MODEL_DIR" value="%BASE%\..\models\SenseVoiceSmall" />
+  <env name="ASR_FFMPEG" value="%BASE%\..\ffmpeg\bin\ffmpeg.exe" />
+  <log mode="roll-by-size-time">
+    <sizeThreshold>10485760</sizeThreshold>
+    <pattern>yyyyMMdd</pattern>
+    <keepFiles>14</keepFiles>
+  </log>
+  <onfailure action="restart" delay="10 sec" />
+  <onfailure action="restart" delay="30 sec" />
+  <onfailure action="none" />
+</service>

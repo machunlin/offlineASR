@@ -2,7 +2,9 @@ package com.example.asr.exception;
 
 import org.springframework.http.HttpStatus;
 
+/** 可预期的业务失败，统一映射为不泄露底层细节的 HTTP 响应。 */
 public class ApiException extends RuntimeException {
+
     private final HttpStatus status;
     private final String code;
 
@@ -11,6 +13,12 @@ public class ApiException extends RuntimeException {
         this.status = status;
         this.code = code;
     }
-    public HttpStatus getStatus() { return status; }
-    public String getCode() { return code; }
+
+    public HttpStatus getStatus() {
+        return status;
+    }
+
+    public String getCode() {
+        return code;
+    }
 }
