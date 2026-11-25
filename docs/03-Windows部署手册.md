@@ -90,6 +90,16 @@ PowerShell 校验示例：
 
 卸载服务不会删除模型、配置和日志。
 
-## 7. 当前验证边界
+## 7. 发布包静态自检
+
+在客户机管理员 PowerShell 中，先生成并验证发布资产清单：
+
+    cd C:\offline-asr-windows-x64
+    powershell -ExecutionPolicy Bypass -File .\scripts\windows-generate-checksums.ps1
+    powershell -ExecutionPolicy Bypass -File .\scripts\windows-verify-package.ps1
+
+预期：自检脚本确认 JAR、Java、模型、FFmpeg、配置均存在，能启动 Java/FFmpeg 版本检查，且所有 checksums.sha256 条目一致。此检查通过不等于 Windows JNI、麦克风或服务运行已通过。
+
+## 8. 当前验证边界
 
 本项目已完成 macOS ARM64 的真实识别和可执行 JAR 验证。Windows 原生库、服务、USB 麦克风、VC++ Runtime、断网和性能均须在目标客户机按本手册实测并记录。

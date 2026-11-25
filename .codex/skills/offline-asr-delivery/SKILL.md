@@ -34,6 +34,7 @@ Use this skill for this repository only. Preserve the selected stack: Java 11, S
 - scripts/windows-package.bat intentionally refuses to package without the complete Windows native JAR.
 - scripts/windows-start.bat validates JAR, Java 11 Runtime, model, tokens, FFmpeg, and config before startup.
 - WinSW requires matching names: scripts/offline-asr.exe and scripts/offline-asr.xml. Validate foreground startup before installing a service.
+- On Windows run scripts/windows-generate-checksums.ps1 followed by scripts/windows-verify-package.ps1 before the first start. Static package verification does not replace an actual JNI, microphone, service, or offline run.
 - The six Chinese documents in docs/01-* through docs/06-* are delivery artifacts. Keep commands, expected results, rollback, and safe deletion boundaries accurate when scripts change.
 
 ## Maintenance

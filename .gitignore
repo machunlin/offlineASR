@@ -8,4 +8,5 @@ logs/
 .validation/
 .m2/
 *.log
+.DS_Store
 
