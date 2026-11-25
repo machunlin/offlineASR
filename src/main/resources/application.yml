@@ -1,0 +1,26 @@
+server:
+  address: ${ASR_HOST:127.0.0.1}
+  port: ${ASR_PORT:8080}
+
+spring:
+  servlet:
+    multipart:
+      max-file-size: ${ASR_MAX_UPLOAD_MB:50}MB
+      max-request-size: ${ASR_MAX_UPLOAD_MB:50}MB
+
+asr:
+  threads: ${ASR_THREADS:2}
+  model-directory: ${ASR_MODEL_DIR:models/SenseVoiceSmall}
+  temp-directory: ${ASR_TEMP_DIR:temp}
+  ffmpeg-command: ${ASR_FFMPEG:ffmpeg}
+  max-upload-mb: ${ASR_MAX_UPLOAD_MB:50}
+  max-duration-seconds: ${ASR_MAX_DURATION_SECONDS:600}
+  decode-timeout-seconds: ${ASR_DECODE_TIMEOUT_SECONDS:60}
+  inference-timeout-seconds: ${ASR_INFERENCE_TIMEOUT_SECONDS:120}
+  queue-timeout-seconds: ${ASR_QUEUE_TIMEOUT_SECONDS:5}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
