@@ -15,10 +15,15 @@ asr:
   temp-directory: ${ASR_TEMP_DIR:temp}
   ffmpeg-command: ${ASR_FFMPEG:ffmpeg}
   max-upload-mb: ${ASR_MAX_UPLOAD_MB:50}
+  # 单个音频允许的最大时长，单位：秒；默认600秒（10分钟），超过后拒绝识别。
   max-duration-seconds: ${ASR_MAX_DURATION_SECONDS:600}
+  # FFmpeg音频解码进程的最长执行时间，单位：秒；超时后终止解码。与音频本身的最大时长不同。
   decode-timeout-seconds: ${ASR_DECODE_TIMEOUT_SECONDS:60}
+  # 等待获取模型推理执行许可的最长时间，单位：秒；超时后返回任务繁忙。
   queue-timeout-seconds: ${ASR_QUEUE_TIMEOUT_SECONDS:5}
+  # 临时音频文件保留时长，单位：小时；超过该时长的文件会被清理。
   temp-retention-hours: ${ASR_TEMP_RETENTION_HOURS:4}
+  # 临时音频文件清理任务的执行间隔，单位：毫秒；默认600000毫秒（10分钟）执行一次。
   temp-cleanup-interval-ms: ${ASR_TEMP_CLEANUP_INTERVAL_MS:600000}
 
 management:
