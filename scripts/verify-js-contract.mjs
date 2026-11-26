@@ -28,6 +28,7 @@ const context = {
   },
 };
 context.window.window = context.window;
+context.window.document = context.document;
 
 vm.runInNewContext(source, context);
 
@@ -59,5 +60,13 @@ await assert.rejects(
   () => context.window.OfflineASR.recognize(new Blob(['audio'])),
   error => error.code === 'ASR_FAILED' && error.message === '识别失败',
 );
+
+context.window.location = {protocol: 'file:'};
+await assert.rejects(
+    () => context.window.OfflineASR.recognize(new Blob(['audio'])),
+    error => error.code === 'LOCAL_FILE_OPEN' && error.message.includes('127.0.0.1:8080'),
+);
+await context.window.document.querySelector('#start').onclick();
+assert.match(elements.get('#status').textContent, /127.0.0.1:8080/);
 
 console.log('JavaScript ASR contract: PASS');

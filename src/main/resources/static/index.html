@@ -1,1 +1,25 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>离线语音识别</title><link rel="stylesheet" href="/style.css"></head><body><main><h1>离线中文语音识别</h1><p id="status">准备中</p><button id="start">开始录音</button><button id="stop" disabled>结束录音</button><button id="clear">清空</button><pre id="result"></pre></main><script src="/app.js"></script></body></html>
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width,initial-scale=1" name="viewport">
+    <title>离线语音识别</title>
+    <!-- 相对路径可避免直接打开文件时被解析为 file:///style.css。正式使用仍必须经 Spring Boot 服务访问。 -->
+    <link href="style.css" rel="stylesheet">
+</head>
+<body>
+<main>
+    <h1>离线中文语音识别</h1>
+    <p id="status">准备中</p>
+    <p hidden id="local-file-hint">
+        当前页面通过本地文件打开，无法连接识别服务。请先启动应用，再访问
+        <a href="http://127.0.0.1:8080/">http://127.0.0.1:8080/</a>。
+    </p>
+    <button id="start">开始录音</button>
+    <button disabled id="stop">结束录音</button>
+    <button id="clear">清空</button>
+    <pre id="result"></pre>
+</main>
+<script src="app.js"></script>
+</body>
+</html>

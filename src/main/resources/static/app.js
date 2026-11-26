@@ -12,6 +12,25 @@
     const startButton = document.querySelector('#start');
     const stopButton = document.querySelector('#stop');
     const clearButton = document.querySelector('#clear');
+    const localFileHint = document.querySelector('#local-file-hint');
+
+    function openedFromLocalFile() {
+        return window.location && window.location.protocol === 'file:';
+    }
+
+    function localFileError() {
+        return {
+            code: 'LOCAL_FILE_OPEN',
+            message: '请先启动识别服务，再通过 http://127.0.0.1:8080/ 打开页面',
+        };
+    }
+
+    function showLocalFileHint() {
+        if (localFileHint) {
+            localFileHint.hidden = false;
+        }
+        showError(localFileError().message);
+    }
 
     function showError(message) {
         statusElement.textContent = message;
@@ -37,6 +56,9 @@
     /** Promise、回调和事件观察同一个最终结果，不重复提交音频。 */
     window.OfflineASR = {
         recognize: async audioBlob => {
+            if (openedFromLocalFile()) {
+                throw localFileError();
+            }
             const requestId = crypto.randomUUID();
             const formData = new FormData();
             formData.append('file', audioBlob, 'recording.webm');
@@ -76,6 +98,10 @@
     };
 
     startButton.onclick = async () => {
+        if (openedFromLocalFile()) {
+            showLocalFileHint();
+            return;
+        }
         try {
             statusElement.textContent = '正在申请麦克风权限';
             mediaStream = await navigator.mediaDevices.getUserMedia({audio: true});
@@ -117,4 +143,8 @@
     clearButton.onclick = () => {
         resultElement.textContent = '';
     };
+
+    if (openedFromLocalFile()) {
+        showLocalFileHint();
+    }
 })();
