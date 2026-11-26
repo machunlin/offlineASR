@@ -15,6 +15,7 @@
     let sampleBuffer;
     let animationFrameId;
     let hasDetectedSound = false;
+    let volumeMonitorAvailable = false;
     let recordingInProgress = false;
 
     const statusElement = document.querySelector('#status');
@@ -96,6 +97,7 @@
         }
         analyser = null;
         sampleBuffer = null;
+        volumeMonitorAvailable = false;
         if (inputMeterFill) inputMeterFill.style.width = '0%';
     }
 
@@ -118,6 +120,7 @@
         audioContext = new AudioContextClass();
         const source = audioContext.createMediaStreamSource(stream);
         analyser = audioContext.createAnalyser();
+        volumeMonitorAvailable = true;
         analyser.fftSize = 2048;
         analyser.smoothingTimeConstant = 0.15;
         source.connect(analyser);
@@ -307,12 +310,13 @@
             };
             recorder.onstop = async () => {
                 const recordedStream = mediaStream;
+                const canCheckSilence = volumeMonitorAvailable;
                 stopTracks();
                 recordingInProgress = false;
                 stopCountdown();
                 if (recordedStream) {
                     const blob = new Blob(chunks, {type: recorder.mimeType || 'audio/webm'});
-                    if (!hasDetectedSound) {
+                    if (canCheckSilence && !hasDetectedSound) {
                         statusElement.textContent = '录音未上传：没有检测到有效声音';
                         if (microphoneHint) {
                             microphoneHint.textContent = '本次录音检测为静音。请检查所选设备，或切换到另一个麦克风后重试。';
