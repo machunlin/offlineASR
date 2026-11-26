@@ -32,6 +32,8 @@ Use this skill for this repository only. Preserve the selected stack: Java 11, S
 - macos-arm64 is the default Maven profile and may contain only sherpa-onnx-native-lib-osx-aarch64-2.0.3.jar.
 - linux-x64 uses the official sherpa-onnx-native-lib-linux-x64-2.0.3.jar from the v2.0.3 GitHub Release. Download it with scripts/download-linux-native.sh and verify SHA-256 before building.
 - windows-x64 may contain only sherpa-onnx-native-lib-win-x64-2.0.3.jar. Never produce or call a Windows package complete until this JAR is fully downloaded and SHA-256-verified against the official v2.0.3 Release.
+- linux-x64 uses the official sherpa-onnx-native-lib-linux-x64-2.0.3.jar from the v2.0.3 GitHub Release. Download it with scripts/download-linux-native.sh and verify SHA-256 before building.
+- windows-x64 may contain only sherpa-onnx-native-lib-win-x64-2.0.3.jar. Never produce or call a Windows package complete until this JAR is fully downloaded and SHA-256-verified against the official v2.0.3 Release.
 - windows-x64 may contain only sherpa-onnx-native-lib-win-x64-2.0.3.jar. Never produce or call a Windows package complete until this JAR is fully downloaded and SHA-256-verified against the official v2.0.3 Release.
 - A successful macOS build or recognition run is not evidence that Windows JNI/DLL loading, Visual C++ Runtime, USB microphone, Windows service, or target-machine performance works.
 
@@ -84,6 +86,23 @@ These findings are for commit b8ee67c and must be rechecked after fixes:
 4. Inspect temp/ after each request and sample logs for controlled one-line errors rather than repeated exception stacks.
 5. Run ./scripts/verify-stage-three.sh; remember it ends with the Windows profile, so clean-build the macOS profile before any subsequent local JAR test.
 6. For Windows work, separately verify package script, checksum coverage, foreground startup and WinSW service startup with effective configuration readback.
+
+
+## Linux x64 delivery
+
+- The supported Linux target is Ubuntu 22.04 x86_64 on Java 11. Linux ARM64 is not part of this delivery target.
+- Run `bash scripts/linux-package.sh` on a Linux x64 build host. It downloads the official v2.0.3 native JAR, verifies the published SHA-256, runs `mvn -Plinux-x64 clean test package`, and creates deploy/linux-x64.
+- Linux deployments require Java 11, FFmpeg, model.int8.onnx and tokens.txt. Keep the default bind address at 127.0.0.1. Do not expose the unauthenticated service to a public or LAN interface without a separately approved security design.
+- The provided systemd unit is a template. Confirm the service account, Java path, deployment directory and file permissions on the target host before enabling it.
+- The current 2 GB Ubuntu VM is a constrained validation target. Measure process RSS after model load and during repeated recognition before setting JAVA_OPTS or systemd memory limits. JVM -Xmx does not cap native sherpa-onnx memory.
+- Temporary-file cleanup uses the yyyyMMddHHmmss filename timestamp, not BasicFileAttributes.creationTime(), because creation-time semantics vary across file systems and providers. Keep the single temp directory, 14-digit timestamp filenames and four-hour retention requirement.
+
+## Cross-platform verification
+
+- GitHub Actions must run independent macOS ARM64, Ubuntu 22.04 x64 and Windows x64 jobs.
+- Always use `clean` when switching Maven platform profiles. Assert that each executable JAR contains only its matching sherpa-onnx native library.
+- Run `bash -n` on all shell scripts. Keep PowerShell syntax checks on Windows.
+- A green CI build proves compile, unit tests and static package contents only. It does not prove real microphone capture, native inference, service startup, offline operation or target-host memory.
 
 
 ## Linux x64 delivery

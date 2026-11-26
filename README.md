@@ -34,13 +34,17 @@ mvn -Pwindows-x64 clean test package
 
 Ubuntu 22.04 x86_64 构建机执行 `bash scripts/linux-package.sh`，脚本会下载并校验官方 sherpa-onnx v2.0.3 Linux x64 原生 JAR，再运行 Maven 测试和打包，输出目录为 `deploy/linux-x64/`。客户机需要 Java 11、FFmpeg 和 SenseVoiceSmall INT8 模型；详细步骤见 `docs/04-Linux部署手册.md`。Linux 包不能包含 macOS 或 Windows 原生库。
 
+## Linux x64 部署
+
+Ubuntu 22.04 x86_64 构建机执行 `bash scripts/linux-package.sh`，脚本会下载并校验官方 sherpa-onnx v2.0.3 Linux x64 原生 JAR，再运行 Maven 测试和打包，输出目录为 `deploy/linux-x64/`。客户机需要 Java 11、FFmpeg 和 SenseVoiceSmall INT8 模型；详细步骤见 `docs/04-Linux部署手册.md`。Linux 包不能包含 macOS 或 Windows 原生库。
+
 ## Windows 部署资产
 
 Windows 部署包需要单独放入 Java 11 x64 Runtime、官方 sherpa-onnx v2.0.3 Windows x64 native JAR 构建出的应用 JAR、SenseVoiceSmall INT8 模型、tokens.txt 和 Windows FFmpeg。Windows 包不能包含 macOS ARM64 native library。
 
 ## 验证边界
 
-自动化测试、Windows CI 构建和 native JAR 静态打包检查均不能替代目标客户 Windows 主机上的 JNI 加载、Chrome 麦克风、文件上传、断网启动、服务化运行及性能验收。现场验收项目见部署手册。
+自动化测试、三平台 CI 构建和 native JAR 静态打包检查均不能替代目标客户 Windows 主机上的 JNI 加载、Chrome 麦克风、文件上传、断网启动、服务化运行及性能验收。现场验收项目见部署手册。
 
 ## 当前验证状态（2026-11-26）
 

@@ -87,7 +87,7 @@ jobs:
           }
       - name: Run Java tests and build Windows x64 package
         shell: pwsh
-        run: mvn -B -Pwindows-x64 -Dmaven.repo.local=.m2 clean test package
+        run: mvn -B -Pwindows-x64 "-Dmaven.repo.local=.m2" clean test package
       - name: Verify Windows native library packaging
         shell: pwsh
         run: |
