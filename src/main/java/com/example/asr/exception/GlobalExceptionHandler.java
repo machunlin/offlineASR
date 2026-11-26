@@ -21,11 +21,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleApiException(
             ApiException exception,
             HttpServletRequest request) {
+        String requestId = requestId(request);
         log.warn("ASR request rejected requestId={} code={} status={}",
-                requestId(request), exception.getCode(), exception.getStatus().value());
+                requestId, exception.getCode(), exception.getStatus().value());
         return ResponseEntity.status(exception.getStatus())
                 .body(new ErrorResponse(
-                        requestId(request),
+                        requestId,
                         exception.getCode(),
                         exception.getMessage()));
     }
