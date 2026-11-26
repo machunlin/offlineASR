@@ -42,6 +42,12 @@ public class AsrHealthController {
         response.put("inferenceDevice", INFERENCE_DEVICE);
         response.put("inferenceThreads", properties.getThreads());
         response.put("ffmpegAvailable", ffmpegAvailable);
+        if (!modelLoaded && asrEngine.unavailableReason() != null) {
+            response.put("modelError", asrEngine.unavailableReason());
+        }
+        if (!ffmpegAvailable) {
+            response.put("ffmpegError", "FFmpeg 不可执行或响应超时");
+        }
         response.put("uptime", elapsedSeconds());
 
         return ResponseEntity.status(ready ? HttpStatus.OK : HttpStatus.SERVICE_UNAVAILABLE)
