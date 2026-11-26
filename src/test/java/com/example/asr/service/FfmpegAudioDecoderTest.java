@@ -23,9 +23,9 @@ class FfmpegAudioDecoderTest {
     Path temporaryDirectory;
 
     @Test
-    void buildsSafeFfmpegCommandAndReturnsFloat32Pcm() throws Exception {
+    void buildsBoundedFfmpegCommandAndReturnsFloat32Pcm() throws Exception {
         AsrProperties properties = new AsrProperties();
-        CapturingProcessLauncher launcher = new CapturingProcessLauncher(false, 0);
+        CapturingProcessLauncher launcher = new CapturingProcessLauncher(false, 0, 4);
         FfmpegAudioDecoder decoder = new FfmpegAudioDecoder(properties, launcher);
         Path input = Files.write(temporaryDirectory.resolve("input.webm"), new byte[]{1});
         Path output = temporaryDirectory.resolve("audio.pcm");
@@ -34,21 +34,36 @@ class FfmpegAudioDecoderTest {
 
         assertEquals(List.of(
                 "ffmpeg", "-y", "-v", "error", "-i", input.toString(),
-                "-ac", "1", "-ar", "16000", "-f", "f32le", output.toString()),
+                "-t", "61", "-ac", "1", "-ar", "16000", "-f", "f32le", output.toString()),
                 launcher.command);
         assertEquals(16_000, decoded.getSampleRate());
         assertEquals(1, decoded.getSamples().length);
     }
 
     @Test
-    void destroysDecoderProcessWhenItExceedsTimeout() throws Exception {
+    void rejectsPcmLargerThanTheConfiguredDurationBeforeReadingIt() throws Exception {
         AsrProperties properties = new AsrProperties();
-        CapturingProcessLauncher launcher = new CapturingProcessLauncher(true, 0);
+        CapturingProcessLauncher launcher = new CapturingProcessLauncher(
+                false, 0, (61 * 16_000 * Float.BYTES) + 4);
         FfmpegAudioDecoder decoder = new FfmpegAudioDecoder(properties, launcher);
-        Path input = Files.write(temporaryDirectory.resolve("input.webm"), new byte[]{1});
+        Path input = Files.write(temporaryDirectory.resolve("long-input.webm"), new byte[]{1});
 
         ApiException exception = assertThrows(ApiException.class,
-                () -> decoder.decode(input, temporaryDirectory.resolve("audio.pcm")));
+                () -> decoder.decode(input, temporaryDirectory.resolve("long-audio.pcm")));
+
+        assertEquals(413, exception.getStatus().value());
+        assertEquals("AUDIO_DURATION_EXCEEDED", exception.getCode());
+    }
+
+    @Test
+    void destroysDecoderProcessWhenItExceedsTimeout() throws Exception {
+        AsrProperties properties = new AsrProperties();
+        CapturingProcessLauncher launcher = new CapturingProcessLauncher(true, 0, 0);
+        FfmpegAudioDecoder decoder = new FfmpegAudioDecoder(properties, launcher);
+        Path input = Files.write(temporaryDirectory.resolve("timeout-input.webm"), new byte[]{1});
+
+        ApiException exception = assertThrows(ApiException.class,
+                () -> decoder.decode(input, temporaryDirectory.resolve("timeout-audio.pcm")));
 
         assertEquals(504, exception.getStatus().value());
         assertEquals("PROCESSING_TIMEOUT", exception.getCode());
@@ -58,12 +73,14 @@ class FfmpegAudioDecoderTest {
     private static final class CapturingProcessLauncher implements FfmpegProcessLauncher {
         private final boolean timedOut;
         private final int exitCode;
+        private final int outputBytes;
         private List<String> command;
         private FakeProcess process;
 
-        private CapturingProcessLauncher(boolean timedOut, int exitCode) {
+        private CapturingProcessLauncher(boolean timedOut, int exitCode, int outputBytes) {
             this.timedOut = timedOut;
             this.exitCode = exitCode;
+            this.outputBytes = outputBytes;
         }
 
         @Override
@@ -71,7 +88,7 @@ class FfmpegAudioDecoderTest {
             this.command = command;
             Path output = Path.of(command.get(command.size() - 1));
             if (!timedOut) {
-                Files.write(output, new byte[]{0, 0, 0, 0});
+                Files.write(output, new byte[outputBytes]);
             }
             process = new FakeProcess(timedOut, exitCode);
             return process;

@@ -1,5 +1,5 @@
 server:
-  #默认绑定 127.0.0.1：只有本机能够访问，设置 ASR_HOST=0.0.0.0：监听所有网络接口，局域网其他设备也可能访问。
+  # 默认只允许本机访问；只有明确需要局域网访问时才通过 ASR_HOST 覆盖。
   address: ${ASR_HOST:127.0.0.1}
   port: ${ASR_PORT:8080}
 
@@ -17,8 +17,9 @@ asr:
   max-upload-mb: ${ASR_MAX_UPLOAD_MB:50}
   max-duration-seconds: ${ASR_MAX_DURATION_SECONDS:600}
   decode-timeout-seconds: ${ASR_DECODE_TIMEOUT_SECONDS:60}
-  inference-timeout-seconds: ${ASR_INFERENCE_TIMEOUT_SECONDS:120}
   queue-timeout-seconds: ${ASR_QUEUE_TIMEOUT_SECONDS:5}
+  temp-retention-hours: ${ASR_TEMP_RETENTION_HOURS:4}
+  temp-cleanup-interval-ms: ${ASR_TEMP_CLEANUP_INTERVAL_MS:600000}
 
 management:
   endpoints:

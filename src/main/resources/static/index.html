@@ -4,21 +4,59 @@
     <meta charset="utf-8">
     <meta content="width=device-width,initial-scale=1" name="viewport">
     <title>离线语音识别</title>
-    <!-- 相对路径可避免直接打开文件时被解析为 file:///style.css。正式使用仍必须经 Spring Boot 服务访问。 -->
     <link href="style.css" rel="stylesheet">
 </head>
 <body>
 <main>
     <h1>离线中文语音识别</h1>
     <p id="status">准备中</p>
+
+    <section class="panel" aria-labelledby="record-title">
+        <h2 id="record-title">麦克风录音</h2>
+        <div class="device-control">
+            <label for="microphone-device">录音输入设备</label>
+            <div class="device-row">
+                <select id="microphone-device" aria-label="选择录音输入设备">
+                    <option value="">系统默认麦克风</option>
+                </select>
+                <button id="refresh-microphones" type="button" class="secondary">刷新设备</button>
+            </div>
+            <p id="microphone-hint" class="hint">首次使用请允许浏览器访问麦克风，然后选择内置麦克风或蓝牙耳机麦克风。</p>
+            <div class="input-meter" role="meter" aria-label="麦克风实时输入音量" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                <div id="input-meter-fill"></div>
+            </div>
+            <p id="microphone-state" class="hint">尚未连接麦克风</p>
+        </div>
+        <p id="recording-limit">单次录音最长 60 秒，剩余时间：<strong id="countdown">60 秒</strong></p>
+        <div class="actions">
+            <button id="start" type="button">开始录音</button>
+            <button id="stop" type="button" disabled>结束录音</button>
+        </div>
+    </section>
+
+    <section class="panel" aria-labelledby="upload-title">
+        <h2 id="upload-title">上传音频文件</h2>
+        <p class="hint">支持 WAV、MP3、M4A、AAC、FLAC、OGG、WebM 等 FFmpeg 可解码格式；最长 60 秒，最大 50 MB。</p>
+        <input id="audio-file" type="file" accept="audio/*,.wav,.mp3,.m4a,.aac,.flac,.ogg,.opus,.webm">
+        <div class="actions">
+            <button id="upload" type="button" disabled>上传并识别</button>
+        </div>
+        <p id="file-info" class="hint">尚未选择音频文件</p>
+    </section>
+
     <p hidden id="local-file-hint">
         当前页面通过本地文件打开，无法连接识别服务。请先启动应用，再访问
         <a href="http://127.0.0.1:8080/">http://127.0.0.1:8080/</a>。
     </p>
-    <button id="start">开始录音</button>
-    <button disabled id="stop">结束录音</button>
-    <button id="clear">清空</button>
-    <pre id="result"></pre>
+
+    <section class="panel" aria-labelledby="result-title">
+        <div class="result-heading">
+            <h2 id="result-title">识别结果</h2>
+            <button id="clear" type="button" class="secondary">清空</button>
+        </div>
+        <pre id="result" aria-live="polite"></pre>
+        <p id="result-meta" class="hint"></p>
+    </section>
 </main>
 <script src="app.js"></script>
 </body>

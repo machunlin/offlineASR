@@ -6,6 +6,8 @@ import com.k2fsa.sherpa.onnx.OfflineRecognizer;
 import com.k2fsa.sherpa.onnx.OfflineRecognizerConfig;
 import com.k2fsa.sherpa.onnx.OfflineSenseVoiceModelConfig;
 import com.k2fsa.sherpa.onnx.OfflineStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PreDestroy;
@@ -16,6 +18,7 @@ import java.nio.file.Path;
 @Component
 public class SherpaOnnxAsrEngine implements AsrEngine {
 
+    private static final Logger log = LoggerFactory.getLogger(SherpaOnnxAsrEngine.class);
     private static final String MODEL_FILENAME = "model.int8.onnx";
     private static final String TOKENS_FILENAME = "tokens.txt";
     private static final String DECODING_METHOD = "greedy_search";
@@ -53,9 +56,7 @@ public class SherpaOnnxAsrEngine implements AsrEngine {
         }
     }
 
-    /**
-     * 模型只在 Spring 启动时创建一次；每个请求仅创建轻量 stream，避免重复加载 ONNX 模型。
-     */
+    /** 模型只在 Spring 启动时创建一次；每个请求仅创建轻量 stream。 */
     private void initializeRecognizer(AsrProperties properties) {
         Path modelDirectory = Path.of(properties.getModelDirectory()).toAbsolutePath().normalize();
         Path modelPath = modelDirectory.resolve(MODEL_FILENAME);
@@ -63,6 +64,7 @@ public class SherpaOnnxAsrEngine implements AsrEngine {
 
         if (!Files.isRegularFile(modelPath) || !Files.isRegularFile(tokensPath)) {
             unavailableReason = "模型文件缺失";
+            log.error("SenseVoice model files are missing; modelDirectory={}", modelDirectory);
             return;
         }
 
@@ -81,9 +83,13 @@ public class SherpaOnnxAsrEngine implements AsrEngine {
                     .setDecodingMethod(DECODING_METHOD)
                     .build();
             recognizer = new OfflineRecognizer(recognizerConfig);
-        } catch (RuntimeException exception) {
-            // 不能将 JNI/ONNX 的底层异常或路径暴露给 HTTP 客户端。
+            log.info("SenseVoice recognizer initialized modelDirectory={} threads={}",
+                    modelDirectory, properties.getThreads());
+        } catch (RuntimeException | LinkageError exception) {
+            // JNI 加载失败通常是 LinkageError，不是 RuntimeException。
             unavailableReason = "模型或原生运行库初始化失败";
+            log.error("Unable to initialize sherpa-onnx recognizer; modelDirectory={} errorType={}",
+                    modelDirectory, exception.getClass().getName(), exception);
         }
     }
 
@@ -93,6 +99,7 @@ public class SherpaOnnxAsrEngine implements AsrEngine {
         if (recognizer != null) {
             recognizer.release();
             recognizer = null;
+            log.info("SenseVoice recognizer released");
         }
     }
 }

@@ -15,6 +15,13 @@ class AsrPropertiesTest {
     }
 
     @Test
+    void usesSixtySecondsAsTheDefaultRecordingLimit() {
+        AsrProperties properties = new AsrProperties();
+
+        assertEquals(60, properties.getMaxDurationSeconds());
+    }
+
+    @Test
     void rejectsNonPositiveInferenceThreadCount() {
         AsrProperties properties = new AsrProperties();
 
