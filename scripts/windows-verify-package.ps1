@@ -60,8 +60,8 @@ foreach ($line in Get-Content -LiteralPath $manifestPath) {
     $verifiedCount++
 }
 
-if ($verifiedCount -lt 4) {
-    throw "哈希清单资产数量不足，期望至少 4 项，实际 $verifiedCount 项"
+if ($verifiedCount -lt 5) {
+    throw "哈希清单资产数量不足，期望至少 5 项，实际 $verifiedCount 项"
 }
 
 Write-Host "Windows 离线部署包静态自检通过，已验证 $verifiedCount 个文件。"
