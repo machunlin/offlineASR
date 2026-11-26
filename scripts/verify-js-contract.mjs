@@ -149,7 +149,7 @@ assert.match(html, /id="upload"/);
 console.log('JavaScript ASR contract, recording timer and audio upload: PASS');
 
 const microphoneTestHtml = fs.readFileSync(
-  new URL('../src/main/resources/static/index-test.html', import.meta.url),
+  new URL('../src/main/resources/static/microphone-test.html', import.meta.url),
   'utf8',
 );
 const scriptStart = microphoneTestHtml.indexOf('<script>');
