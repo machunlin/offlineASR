@@ -4,12 +4,13 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+$Root = (Resolve-Path -LiteralPath $Root).Path
 $manifestPath = Join-Path $Root 'checksums.sha256'
 $assets = @(
-    'appoffline-asr.jar',
-    'modelsSenseVoiceSmallmodel.int8.onnx',
-    'modelsSenseVoiceSmall	okens.txt',
-    'ffmpeginfmpeg.exe'
+    'app/offline-asr.jar',
+    'models/SenseVoiceSmall/model.int8.onnx',
+    'models/SenseVoiceSmall/tokens.txt',
+    'ffmpeg/bin/ffmpeg.exe'
 )
 
 $lines = @('# SHA-256 generated for the offline ASR deployment package')
