@@ -57,6 +57,12 @@ const context = {
   document: {querySelector: selector => elements.get(selector)},
   navigator: {mediaDevices: {getUserMedia: async () => ({
     getTracks: () => [{stop() {}}],
+    getAudioTracks: () => [{
+      label: '测试麦克风',
+      readyState: 'live',
+      muted: false,
+      addEventListener() {},
+    }],
   })}},
   window: {
     dispatchEvent: event => dispatched.push(event),
@@ -146,6 +152,12 @@ assert.match(elements.get('#result-meta').textContent, /speech.wav/);
 
 assert.match(html, /id="audio-file"/);
 assert.match(html, /id="upload"/);
+assert.match(html, /id="microphone-device"/);
+assert.match(html, /id="refresh-microphones"/);
+assert.match(html, /id="input-meter-fill"/);
+assert.match(source, /deviceId: \{exact: selectedDeviceId\}/);
+assert.match(source, /enumerateDevices/);
+assert.match(source, /hasDetectedSound/);
 console.log('JavaScript ASR contract, recording timer and audio upload: PASS');
 
 const microphoneTestHtml = fs.readFileSync(
