@@ -2,17 +2,13 @@ package com.example.asr.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-/**
- * 离线识别服务的集中配置。
- *
- * <p>所有限制均在绑定时校验，避免无效配置延迟到识别请求期间才暴露。</p>
- */
+/** 离线识别服务的集中配置。 */
 @ConfigurationProperties(prefix = "asr")
 public class AsrProperties {
 
     private static final int DEFAULT_THREADS = 2;
     private static final long DEFAULT_MAX_UPLOAD_MB = 50;
-    private static final long DEFAULT_MAX_DURATION_SECONDS = 600;
+    private static final long DEFAULT_MAX_DURATION_SECONDS = 60;
     private static final long DEFAULT_DECODE_TIMEOUT_SECONDS = 60;
     private static final long DEFAULT_INFERENCE_TIMEOUT_SECONDS = 120;
     private static final long DEFAULT_QUEUE_TIMEOUT_SECONDS = 5;
@@ -27,85 +23,66 @@ public class AsrProperties {
     private long inferenceTimeoutSeconds = DEFAULT_INFERENCE_TIMEOUT_SECONDS;
     private long queueTimeoutSeconds = DEFAULT_QUEUE_TIMEOUT_SECONDS;
 
-    public int getThreads() {
-        return threads;
-    }
+    public int getThreads() { return threads; }
 
     public void setThreads(int threads) {
-        if (threads <= 0) {
-            throw new IllegalArgumentException("ASR 推理线程数必须为正整数");
-        }
+        if (threads <= 0) throw new IllegalArgumentException("ASR 推理线程数必须为正整数");
         this.threads = threads;
     }
 
-    public String getModelDirectory() {
-        return modelDirectory;
-    }
+    public String getModelDirectory() { return modelDirectory; }
 
     public void setModelDirectory(String modelDirectory) {
         this.modelDirectory = requireText(modelDirectory, "模型目录");
     }
 
-    public String getTempDirectory() {
-        return tempDirectory;
-    }
+    public String getTempDirectory() { return tempDirectory; }
 
     public void setTempDirectory(String tempDirectory) {
         this.tempDirectory = requireText(tempDirectory, "临时目录");
     }
 
-    public String getFfmpegCommand() {
-        return ffmpegCommand;
-    }
+    public String getFfmpegCommand() { return ffmpegCommand; }
 
     public void setFfmpegCommand(String ffmpegCommand) {
         this.ffmpegCommand = requireText(ffmpegCommand, "FFmpeg 命令");
     }
 
-    public long getMaxUploadMb() {
-        return maxUploadMb;
-    }
+    public long getMaxUploadMb() { return maxUploadMb; }
 
     public void setMaxUploadMb(long maxUploadMb) {
         this.maxUploadMb = requirePositive(maxUploadMb, "最大上传大小");
     }
 
-    public long getMaxDurationSeconds() {
-        return maxDurationSeconds;
-    }
+    public long getMaxDurationSeconds() { return maxDurationSeconds; }
 
     public void setMaxDurationSeconds(long maxDurationSeconds) {
         this.maxDurationSeconds = requirePositive(maxDurationSeconds, "最大录音时长");
     }
 
-    public long getDecodeTimeoutSeconds() {
-        return decodeTimeoutSeconds;
-    }
+    public long getDecodeTimeoutSeconds() { return decodeTimeoutSeconds; }
 
     public void setDecodeTimeoutSeconds(long decodeTimeoutSeconds) {
         this.decodeTimeoutSeconds = requirePositive(decodeTimeoutSeconds, "解码超时");
     }
 
-    public long getInferenceTimeoutSeconds() {
-        return inferenceTimeoutSeconds;
-    }
+    /**
+     * 保留配置兼容性。JNI 同步推理无法由 Java Future 安全强制终止，因此该值不是硬超时保证。
+     */
+    public long getInferenceTimeoutSeconds() { return inferenceTimeoutSeconds; }
 
     public void setInferenceTimeoutSeconds(long inferenceTimeoutSeconds) {
         this.inferenceTimeoutSeconds = requirePositive(inferenceTimeoutSeconds, "推理超时");
     }
 
-    public long getQueueTimeoutSeconds() {
-        return queueTimeoutSeconds;
-    }
+    public long getQueueTimeoutSeconds() { return queueTimeoutSeconds; }
 
     public void setQueueTimeoutSeconds(long queueTimeoutSeconds) {
         this.queueTimeoutSeconds = requirePositive(queueTimeoutSeconds, "排队超时");
     }
 
     private long requirePositive(long value, String propertyName) {
-        if (value <= 0) {
-            throw new IllegalArgumentException(propertyName + "必须为正整数");
-        }
+        if (value <= 0) throw new IllegalArgumentException(propertyName + "必须为正整数");
         return value;
     }
 
