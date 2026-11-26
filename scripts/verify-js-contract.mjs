@@ -147,3 +147,22 @@ assert.match(elements.get('#result-meta').textContent, /speech.wav/);
 assert.match(html, /id="audio-file"/);
 assert.match(html, /id="upload"/);
 console.log('JavaScript ASR contract, recording timer and audio upload: PASS');
+
+const microphoneTestHtml = fs.readFileSync(
+  new URL('../src/main/resources/static/index-test.html', import.meta.url),
+  'utf8',
+);
+const microphoneTestScript = microphoneTestHtml.match(/<script>([\\s\\S]*?)<\\/script>/);
+assert.ok(microphoneTestScript, '麦克风检测页面必须包含检测脚本');
+new vm.Script(microphoneTestScript[1]);
+assert.match(microphoneTestHtml, /getUserMedia/);
+assert.match(microphoneTestHtml, /createMediaStreamSource/);
+assert.match(microphoneTestHtml, /getFloatTimeDomainData/);
+assert.match(microphoneTestHtml, /RMS/);
+assert.match(microphoneTestHtml, /Peak/);
+assert.match(microphoneTestHtml, /MediaRecorder/);
+assert.match(microphoneTestHtml, /recording-playback/);
+assert.doesNotMatch(microphoneTestHtml, /fetch\\s*\\(/, '独立检测页面不得上传音频或调用识别接口');
+
+console.log('麦克风检测页面脚本语法与音量检测契约：PASS');
+
