@@ -15,7 +15,7 @@ asr:
   temp-directory: ${ASR_TEMP_DIR:temp}
   ffmpeg-command: ${ASR_FFMPEG:ffmpeg}
   max-upload-mb: ${ASR_MAX_UPLOAD_MB:50}
-  max-duration-seconds: ${ASR_MAX_DURATION_SECONDS:600}
+  max-duration-seconds: ${ASR_MAX_DURATION_SECONDS:60}
   decode-timeout-seconds: ${ASR_DECODE_TIMEOUT_SECONDS:60}
   queue-timeout-seconds: ${ASR_QUEUE_TIMEOUT_SECONDS:5}
   temp-retention-hours: ${ASR_TEMP_RETENTION_HOURS:4}
