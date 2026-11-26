@@ -27,6 +27,13 @@ $java = Join-Path $Root 'jdk/bin/java.exe'
 $ffmpeg = Join-Path $Root 'ffmpeg/bin/ffmpeg.exe'
 & $java -version
 if ($LASTEXITCODE -ne 0) { throw 'Java Runtime 无法执行' }
+$javaProperties = (& $java -XshowSettings:properties -version 2>&1 | Out-String)
+if ($javaProperties -notmatch 'java.specification.version\s*=\s*11') {
+    throw '部署包必须使用 Java 11 Runtime'
+}
+if ($javaProperties -notmatch 'os.arch\s*=\s*(amd64|x86_64)') {
+    throw '部署包必须使用 64 位 x64 Java Runtime'
+}
 & $ffmpeg -version
 if ($LASTEXITCODE -ne 0) { throw 'FFmpeg 无法执行' }
 
