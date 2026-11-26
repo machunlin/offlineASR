@@ -5,6 +5,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
+import java.util.UUID;
 
 import com.example.asr.config.AsrProperties;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,11 +32,12 @@ public class TemporaryAudioStorage {
             throw new IllegalArgumentException("请求 ID 格式非法");
         }
         Files.createDirectories(rootDirectory);
-        Path requestDirectory = rootDirectory.resolve(requestId).normalize();
+        // requestId 是外部可控的关联标识；目录额外追加随机后缀，避免并发复用 ID 时互相覆盖/删除。
+        Path requestDirectory = rootDirectory.resolve(requestId + "-" + UUID.randomUUID()).normalize();
         if (!requestDirectory.startsWith(rootDirectory)) {
             throw new IllegalArgumentException("临时目录越界");
         }
-        return Files.createDirectories(requestDirectory);
+        return Files.createDirectory(requestDirectory);
     }
 
     public void deleteRequestDirectory(Path requestDirectory) throws IOException {
