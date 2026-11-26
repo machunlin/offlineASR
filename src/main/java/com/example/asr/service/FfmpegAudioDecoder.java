@@ -95,17 +95,37 @@ public class FfmpegAudioDecoder {
 
     private void validatePcmFile(Path outputPath) {
         try {
-            long maxPcmBytes = (properties.getMaxDurationSeconds() + DURATION_DETECTION_MARGIN_SECONDS)
+            long maxDurationSeconds = properties.getMaxDurationSeconds();
+            long maxPcmBytes = (maxDurationSeconds + DURATION_DETECTION_MARGIN_SECONDS)
                     * TARGET_SAMPLE_RATE * BYTES_PER_SAMPLE;
-            if (!Files.isRegularFile(outputPath) || Files.size(outputPath) == 0L) {
+            if (!Files.isRegularFile(outputPath)) {
+                log.warn("PCM 文件不存在或不是普通文件，outputPath={} maxDurationSeconds={}",
+                        outputPath.toAbsolutePath(), maxDurationSeconds);
                 throw new ApiException(HttpStatus.UNPROCESSABLE_ENTITY, "AUDIO_DECODE_FAILED",
                         "音频解码失败，请使用有效录音重试");
             }
-            if (Files.size(outputPath) > maxPcmBytes) {
+
+            long actualPcmBytes = Files.size(outputPath);
+            double actualDurationSeconds = (double) actualPcmBytes
+                    / (TARGET_SAMPLE_RATE * BYTES_PER_SAMPLE);
+            log.info("PCM 文件校验：outputPath={} actualBytes={} actualDurationSeconds={} "
+                            + "maxDurationSeconds={} maxAllowedBytes={} sampleRate={} channels=1 format={}",
+                    outputPath.toAbsolutePath(), actualPcmBytes, actualDurationSeconds,
+                    maxDurationSeconds, maxPcmBytes, TARGET_SAMPLE_RATE, PCM_FORMAT);
+
+            if (actualPcmBytes == 0L) {
+                throw new ApiException(HttpStatus.UNPROCESSABLE_ENTITY, "AUDIO_DECODE_FAILED",
+                        "音频解码失败，请使用有效录音重试");
+            }
+            if (actualPcmBytes > maxPcmBytes) {
+                log.warn("PCM 文件超过解码时长预检上限：actualBytes={} actualDurationSeconds={} "
+                                + "maxDurationSeconds={} maxAllowedBytes={}",
+                        actualPcmBytes, actualDurationSeconds, maxDurationSeconds, maxPcmBytes);
                 throw new ApiException(HttpStatus.PAYLOAD_TOO_LARGE, "AUDIO_DURATION_EXCEEDED",
                         "录音时长超过限制");
             }
         } catch (IOException exception) {
+            log.warn("读取 PCM 文件信息失败，outputPath={}", outputPath.toAbsolutePath(), exception);
             throw new ApiException(HttpStatus.UNPROCESSABLE_ENTITY, "AUDIO_DECODE_FAILED",
                     "音频解码失败，请使用有效录音重试");
         }
