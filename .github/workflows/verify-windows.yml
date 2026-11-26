@@ -31,7 +31,8 @@ jobs:
           }
       - name: Check test data download shell script
         shell: bash
-        run: bash -n scripts/download-test-data.sh\n      - name: Run Java tests and build Windows x64 package
+        run: bash -n scripts/download-test-data.sh
+      - name: Run Java tests and build Windows x64 package
         shell: pwsh
         run: mvn -B -Pwindows-x64 clean test package
       - name: Verify Windows native library packaging
