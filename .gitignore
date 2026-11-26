@@ -14,3 +14,7 @@ logs/
 /src/test/resources/test-data/manifest.tsv
 /src/test/resources/test-data/.download-cache/
 /.env
+
+# Linux x64 sherpa-onnx 原生 JAR 由构建脚本下载并校验，不提交二进制文件。
+/lib/sherpa-onnx-native-lib-linux-x64-2.0.3.jar
+/lib/linux-x64-sha256.txt

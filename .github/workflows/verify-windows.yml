@@ -47,16 +47,15 @@ jobs:
           node-version: "20"
       - name: 安装 FFmpeg
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
-      - name: 下载并校验 Linux x64 原生库
-        run: bash scripts/download-linux-native.sh
       - name: 检查 Linux 脚本语法
         run: bash -n scripts/linux-package.sh scripts/linux-start.sh scripts/download-linux-native.sh scripts/verify-stage-three.sh
-      - name: 运行 Java 测试并构建 Linux x64
-        run: mvn -B -Plinux-x64 -Dmaven.repo.local=.m2 clean test package
-      - name: 验证 Linux 原生库打包隔离
+      - name: 执行 Linux 部署包构建脚本（含 Java 测试）
+        run: bash scripts/linux-package.sh
+      - name: 验证 Linux 部署包和原生库隔离
         run: |
-          jar tf target/offline-asr-0.1.0-SNAPSHOT.jar | grep -q 'BOOT-INF/lib/sherpa-onnx-native-lib-linux-x64-2.0.3.jar'
-          if jar tf target/offline-asr-0.1.0-SNAPSHOT.jar | grep -Eq 'osx-aarch64|win-x64'; then
+          test -f deploy/linux-x64/app/offline-asr.jar
+          jar tf deploy/linux-x64/app/offline-asr.jar | grep -q 'BOOT-INF/lib/sherpa-onnx-native-lib-linux-x64-2.0.3.jar'
+          if jar tf deploy/linux-x64/app/offline-asr.jar | grep -Eq 'osx-aarch64|win-x64'; then
             echo "Linux 包含其他平台原生库" >&2
             exit 1
           fi
