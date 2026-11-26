@@ -152,17 +152,17 @@ const microphoneTestHtml = fs.readFileSync(
   new URL('../src/main/resources/static/index-test.html', import.meta.url),
   'utf8',
 );
-const microphoneTestScript = microphoneTestHtml.match(/<script>([\\s\\S]*?)<\\/script>/);
-assert.ok(microphoneTestScript, '麦克风检测页面必须包含检测脚本');
-new vm.Script(microphoneTestScript[1]);
-assert.match(microphoneTestHtml, /getUserMedia/);
-assert.match(microphoneTestHtml, /createMediaStreamSource/);
-assert.match(microphoneTestHtml, /getFloatTimeDomainData/);
-assert.match(microphoneTestHtml, /RMS/);
-assert.match(microphoneTestHtml, /Peak/);
-assert.match(microphoneTestHtml, /MediaRecorder/);
-assert.match(microphoneTestHtml, /recording-playback/);
-assert.doesNotMatch(microphoneTestHtml, /fetch\\s*\\(/, '独立检测页面不得上传音频或调用识别接口');
+const scriptStart = microphoneTestHtml.indexOf('<script>');
+const scriptEnd = microphoneTestHtml.indexOf('</script>', scriptStart);
+assert.ok(scriptStart >= 0 && scriptEnd > scriptStart, '麦克风检测页面必须包含检测脚本');
+new vm.Script(microphoneTestHtml.slice(scriptStart + '<script>'.length, scriptEnd));
+assert.ok(microphoneTestHtml.includes('getUserMedia'));
+assert.ok(microphoneTestHtml.includes('createMediaStreamSource'));
+assert.ok(microphoneTestHtml.includes('getFloatTimeDomainData'));
+assert.ok(microphoneTestHtml.includes('RMS'));
+assert.ok(microphoneTestHtml.includes('Peak'));
+assert.ok(microphoneTestHtml.includes('MediaRecorder'));
+assert.ok(microphoneTestHtml.includes('recording-playback'));
+assert.equal(microphoneTestHtml.includes('fetch('), false, '独立检测页面不得上传音频或调用识别接口');
 
 console.log('麦克风检测页面脚本语法与音量检测契约：PASS');
-
