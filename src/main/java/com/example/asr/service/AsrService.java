@@ -3,6 +3,8 @@ package com.example.asr.service;
 import com.example.asr.config.AsrProperties;
 import com.example.asr.dto.RecognitionResponse;
 import com.example.asr.exception.ApiException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -16,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class AsrService {
 
+    private static final Logger log = LoggerFactory.getLogger(AsrService.class);
     private static final String INPUT_FILENAME = "input.audio";
     private static final String PCM_FILENAME = "audio.pcm";
     private static final long BYTES_PER_MB = 1024L * 1024L;
@@ -25,9 +28,7 @@ public class AsrService {
     private final FfmpegAudioDecoder audioDecoder;
     private final AsrEngine asrEngine;
 
-    /**
-     * SenseVoice 识别器在首期以单路方式复用，避免并发访问引起不可预测的 JNI 资源竞争。
-     */
+    /** SenseVoice 首期单路复用，避免 JNI 推理资源竞争。 */
     private final Semaphore inferenceGate = new Semaphore(1);
 
     public AsrService(AsrProperties properties,
@@ -70,24 +71,34 @@ public class AsrService {
                         "未获得有效识别结果");
             }
 
+            double totalSeconds = elapsedSeconds(requestStartedAt);
+            log.info("ASR completed requestId={} audioSeconds={} decodeSeconds={} inferenceSeconds={} totalSeconds={}",
+                    requestId, decodedAudio.getDurationSeconds(), decodedAudio.getDecodeSeconds(),
+                    inferenceSeconds, totalSeconds);
             return new RecognitionResponse(
                     requestId,
                     text,
                     decodedAudio.getDurationSeconds(),
                     decodedAudio.getDecodeSeconds(),
                     inferenceSeconds,
-                    elapsedSeconds(requestStartedAt));
+                    totalSeconds);
         } catch (IOException exception) {
+            log.warn("ASR request failed while handling temporary audio requestId={} reason={}",
+                    requestId, exception.toString());
             throw new ApiException(
                     HttpStatus.BAD_REQUEST,
                     "INVALID_REQUEST",
                     "上传音频读取失败");
+        } catch (RuntimeException exception) {
+            log.error("ASR request failed requestId={} type={}",
+                    requestId, exception.getClass().getSimpleName());
+            throw exception;
         } finally {
-            // 仅释放当前请求实际取得的许可，不能让等待超时的请求破坏单路限制。
+            // 先清理本次请求目录，再释放单路推理许可，避免下一个请求复用资源时发生清理竞态。
+            deleteTemporaryFiles(requestDirectory, requestId);
             if (gateAcquired) {
                 inferenceGate.release();
             }
-            deleteTemporaryFiles(requestDirectory);
         }
     }
 
@@ -133,14 +144,15 @@ public class AsrService {
         }
     }
 
-    private void deleteTemporaryFiles(Path requestDirectory) {
+    private void deleteTemporaryFiles(Path requestDirectory, String requestId) {
         if (requestDirectory == null) {
             return;
         }
         try {
             temporaryAudioStorage.deleteRequestDirectory(requestDirectory);
-        } catch (IOException ignored) {
-            // 清理失败不覆盖原始识别错误；该目录始终限制在项目 temp 根目录内。
+        } catch (IOException exception) {
+            log.warn("Unable to clean temporary audio requestId={} directory={}",
+                    requestId, requestDirectory.getFileName(), exception);
         }
     }
 
