@@ -5,6 +5,7 @@ import com.example.asr.dto.RecognitionResponse;
 import com.example.asr.exception.ApiException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.springframework.mock.web.MockMultipartFile;
 
 import java.io.IOException;
@@ -69,6 +70,7 @@ class AsrServiceTest {
      * 在 IDEA 测试控制台输出实际识别文本。运行前需准备模型、原生库和 FFmpeg。
      */
     @Test
+    @EnabledIfSystemProperty(named = "asr.accuracy.enabled", matches = "true")
     void recognizesBundledChineseAudioAndPrintsRecognizedText() throws Exception {
         AsrProperties properties = new AsrProperties();
         properties.setMaxDurationSeconds(60);
