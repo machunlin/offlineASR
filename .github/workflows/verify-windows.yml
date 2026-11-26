@@ -41,7 +41,8 @@ jobs:
           if (-not ($entries -contains "BOOT-INF/lib/sherpa-onnx-native-lib-win-x64-2.0.3.jar")) {
             throw "Windows x64 native library is missing from package"
           }
-          if ($entries | Where-Object { $_ -match "osx-aarch64" }) {
+          $macEntries = $entries | Where-Object { $_ -match "osx-aarch64" }
+          if ($macEntries) {
             throw "macOS native library must not be present in Windows package"
           }
       - name: Run browser JavaScript contract tests
