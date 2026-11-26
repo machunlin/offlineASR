@@ -97,6 +97,16 @@ await context.window.document.querySelector('#start').onclick();
 assert.match(elements.get('#status').textContent, /127.0.0.1:8080/);
 
 context.window.location = {protocol: 'http:'};
+context.fetch = async () => ({
+  ok: true,
+  json: async () => ({
+    success: true,
+    requestId: 'js-contract-001',
+    text: '识别完成',
+    audioDuration: 1,
+    inferenceTime: 0.2,
+  }),
+});
 await elements.get('#start').onclick();
 assert.equal(elements.get('#start').disabled, true);
 assert.equal(elements.get('#stop').disabled, false);
