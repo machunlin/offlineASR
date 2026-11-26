@@ -275,6 +275,15 @@ const result = await asr.recognize(recording.blob, {
 console.log(result.text);
 ```
 
+也支持将“停止录音 + 上传识别”合并为一次调用：
+
+```javascript
+const result = await asr.stopRecordingAndRecognize({filename: 'recording.webm'});
+console.log(result.text);
+```
+
+该方法内部先执行 `stopRecording()`，再执行 `recognize()`；静音检测失败时不会上传。
+
 也支持直接识别文件：
 
 ```javascript
