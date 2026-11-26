@@ -22,6 +22,13 @@ Use this skill for this repository only. Preserve the selected stack: Java 11, S
 - windows-x64 may contain only sherpa-onnx-native-lib-win-x64-2.0.3.jar. Never produce or call a Windows package complete until this JAR is fully downloaded and SHA-256-verified against the official v2.0.3 Release.
 - A successful macOS build or recognition run is not evidence that Windows JNI/DLL loading, Visual C++ Runtime, USB microphone, Windows service, or target-machine performance works.
 
+## Collaboration and Git rules
+
+- Before every commit, fetch the latest remote branch and inspect its current HEAD. Never commit against a stale base. If the remote branch advanced, incorporate the latest changes first, resolve conflicts without discarding user changes, then re-run the relevant checks.
+- Commit each completed, independently verifiable implementation step. Use a concise Chinese commit message. Do not push to or modify master, force-push, merge, or perform destructive history rewrites unless explicitly authorized.
+- Write logs, commit messages, documentation, and code comments in Chinese wherever practical. Keep Java/JavaScript identifiers, API names, protocol fields, and standard technical terms in their conventional English form.
+- When modifying scripts, provide the complete executable script in the handoff, not isolated fragments.
+
 ## Verification order
 
 1. Run focused tests before changing behavior; for every new behavior write a failing test first.
@@ -34,6 +41,7 @@ Use this skill for this repository only. Preserve the selected stack: Java 11, S
 - scripts/windows-package.bat intentionally refuses to package without the complete Windows native JAR.
 - scripts/windows-start.bat validates JAR, Java 11 Runtime, model, tokens, FFmpeg, and config before startup.
 - WinSW requires matching names: scripts/offline-asr.exe and scripts/offline-asr.xml. Validate foreground startup before installing a service.
+- For browser recordings, do not assume a valid WebM container means usable speech. Inspect the decoded PCM RMS and peak; RMS=0 and peak=0 means the recording contains digital silence. Correlate the requestId with both the upload log and the subsequent decode-statistics log. Check Chrome microphone permission, selected input device, operating-system microphone privacy/mute state, and MediaStreamTrack muted/readyState before blaming FFmpeg or SenseVoice.
 - On Windows run scripts/windows-generate-checksums.ps1 followed by scripts/windows-verify-package.ps1 before the first start. Static package verification does not replace an actual JNI, microphone, service, or offline run.
 - The six Chinese documents in docs/01-* through docs/06-* are delivery artifacts. Keep commands, expected results, rollback, and safe deletion boundaries accurate when scripts change.
 

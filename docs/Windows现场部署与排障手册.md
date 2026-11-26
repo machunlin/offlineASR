@@ -52,6 +52,8 @@ offline-asr/
 | health 返回 NOT_READY | 查看模型目录和 JNI 初始化错误 | 核对模型、Windows x64 native JAR、Java x64 和 VC++ Runtime |
 | 找不到 FFmpeg | 检查 `ffmpeg/bin/ffmpeg.exe` | 重新部署完整 FFmpeg 目录 |
 | 麦克风无法启动 | 检查 Chrome 站点权限和 Windows 麦克风隐私设置 | 允许 localhost 使用麦克风 |
+| 录音文件能上传但回放无声 | 按 requestId 查看 FFmpeg 解码完成日志中的 RMS 和峰值；若均为 0，说明音频是数字静音 | 检查 Chrome 麦克风权限、输入设备选择、Windows 麦克风隐私和系统静音状态；确认录音时输入音轨未 muted 且 readyState 为 live |
+| WebM 可解码但没有识别结果 | 用 FFmpeg 将 WebM 解码，核对 PCM 是否全零 | 容器/Opus 解码成功不代表录到声音；RMS=0 且峰值=0 时应先排查采集端，不要先调整模型或 FFmpeg |
 | 上传音频无法识别 | 按 requestId 查看上传和 FFmpeg 解码日志 | 确认格式、文件大小和音频时长 |
 | 临时文件未清理 | 检查清理任务日志、文件创建时间和目录权限 | 确认创建时间已超过 4 小时且服务账户有删除权限 |
 

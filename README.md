@@ -9,6 +9,8 @@ Java 11 + Spring Boot 2.7 的本机离线中文语音转文字服务。模型放
 - 日志写入 `logs/offline-asr.log`，按天滚动并保留 15 天；不记录音频内容和完整识别文本。
 - 原始音频和解码后的 PCM 文件统一保存在 `temp/`，文件名格式为 `yyyyMMddHHmmss.扩展名`，例如 `20261126163025.wav`。文件按文件系统记录的创建时间保留 4 小时；后台每 10 分钟扫描并删除创建时间超过 4 小时的普通文件，不递归删除子目录。可通过 `ASR_TEMP_RETENTION_HOURS` 和 `ASR_TEMP_CLEANUP_INTERVAL_MS` 调整保留时长与扫描间隔。
 - 接口：`POST /api/asr`（multipart 字段 `file`）和 `GET /api/asr/health`。
+- 浏览器录音排障：WebM 文件可正常解析但没有声音时，应检查解码后的 PCM RMS/峰值；两者均为 0 表示录到了数字静音，按 requestId 检查 Chrome 麦克风权限、输入设备及系统麦克风状态，详见 [开发协作与代码提交规范](docs/开发协作规范.md)。
+- 代码提交、中文日志/注释和变更验证约定见 [开发协作规范](docs/开发协作规范.md)。
 - Windows 现场部署和排障流程见 [Windows 现场部署与排障手册](docs/Windows现场部署与排障手册.md)。
 
 ## 构建与自动化检查
