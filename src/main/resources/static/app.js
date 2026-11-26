@@ -65,10 +65,7 @@
         countdownTimer = window.setInterval(() => {
             remainingSeconds = Math.max(0, remainingSeconds - 1);
             updateCountdown();
-            if (remainingSeconds === 0) {
-                stopCountdown();
-                setStatus('已达到录音时长上限，正在结束录音');
-            }
+            if (remainingSeconds === 0) stopRecording();
         }, 1000);
     }
 
@@ -172,7 +169,13 @@
         elements.stop.disabled = true;
         stopCountdown();
         try {
-            await sdk.stopRecording();
+            const result = await sdk.stopRecording();
+            lastRecording = result.blob;
+            const url = URL.createObjectURL(result.blob);
+            elements.playback.src = url;
+            elements.playback.hidden = false;
+            elements.recognizeRecording.disabled = false;
+            setStatus('录音完成，可以回放或提交识别');
         } catch (error) {
             showError(error);
         } finally {
@@ -223,23 +226,6 @@
     sdk.on('deviceconnected', renderTrackState);
     sdk.on('deviceschange', event => renderDevices(event.devices));
     sdk.on('recordinglimit', () => setStatus('已达到录音时长上限，正在停止录音'));
-    sdk.on('recordingstop', result => {
-        recording = false;
-        stopCountdown();
-        elements.stop.disabled = true;
-        if (!result.silent) {
-            lastRecording = result.blob;
-            if (elements.playback.src) URL.revokeObjectURL(elements.playback.src);
-            elements.playback.src = URL.createObjectURL(result.blob);
-            elements.playback.hidden = false;
-            elements.recognizeRecording.disabled = false;
-            setStatus('录音完成，可以回放或提交识别');
-        } else {
-            lastRecording = null;
-            elements.recognizeRecording.disabled = true;
-        }
-        setBusy(false);
-    });
     sdk.on('error', showError);
 
     elements.refresh.onclick = refreshDevices;
