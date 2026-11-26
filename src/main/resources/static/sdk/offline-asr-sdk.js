@@ -82,7 +82,6 @@
                 handlers.forEach(handler => {
                     try { handler(detail); } catch (error) {
                         // 单个业务回调异常不能中断 SDK 内部状态流转。
-                        setTimeout(() => { throw error; }, 0);
                     }
                 });
             }
@@ -139,6 +138,7 @@
 
         async selectDevice(deviceId) {
             this._assertAvailable();
+            if (this.recorder && this.recorder.state === 'recording') throw new SDKError('RECORDING_IN_PROGRESS', '录音期间不能切换麦克风设备');
             this.deviceId = deviceId || '';
             if (this.options.rememberDevice) {
                 try {
@@ -233,7 +233,6 @@
                 this.hasDetectedSound = true;
             }
             this._emit('volumechange', this.lastVolume);
-            this._emit('trackstatechange', this._getTrackState());
             this.animationFrameId = window.requestAnimationFrame(() => this._analyzeVolume());
         }
 
