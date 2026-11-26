@@ -177,7 +177,7 @@ await asr.startMonitor();
 // 停止音量分析，但默认保留麦克风流，便于随后直接录音。
 asr.stopMonitor();
 
-// 停止检测并同时释放麦克风流。
+// 停止检测并同时释放麦克风流。录音过程中不允许停止音量检测，以免静音保护失效。
 asr.stopMonitor({ keepStream: false });
 ```
 

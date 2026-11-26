@@ -255,6 +255,9 @@
         }
 
         stopMonitor(options) {
+            if (this.recorder && this.recorder.state === 'recording') {
+                throw new SDKError('RECORDING_IN_PROGRESS', '录音期间不能停止音量检测，以免静音检测失效');
+            }
             this._stopMonitorGraph();
             if (!(options && options.keepStream === false)) return;
             this._stopStream();

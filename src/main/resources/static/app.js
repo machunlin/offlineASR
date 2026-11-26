@@ -154,6 +154,8 @@
             elements.device.disabled = true;
             await sdk.startRecording();
             recording = true;
+            elements.startMonitor.disabled = true;
+            elements.stopMonitor.disabled = true;
             elements.stop.disabled = false;
             startCountdown();
             setStatus('正在录音，请对着所选麦克风说话');
@@ -181,6 +183,7 @@
         } finally {
             recording = false;
             elements.stop.disabled = true;
+            elements.stopMonitor.disabled = false;
             setBusy(false);
         }
     }
@@ -223,6 +226,14 @@
         elements.meter.setAttribute('aria-valuenow', String(Math.round(volume.level)));
     });
     sdk.on('trackstatechange', renderTrackState);
+    sdk.on('monitorstart', () => {
+        elements.startMonitor.disabled = true;
+        elements.stopMonitor.disabled = recording;
+    });
+    sdk.on('monitorstop', () => {
+        elements.startMonitor.disabled = false;
+        elements.stopMonitor.disabled = true;
+    });
     sdk.on('deviceconnected', renderTrackState);
     sdk.on('deviceschange', event => renderDevices(event.devices));
     sdk.on('recordinglimit', () => setStatus('已达到录音时长上限，正在停止录音'));
