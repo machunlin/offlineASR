@@ -72,9 +72,9 @@ public class AsrService {
             }
 
             double totalSeconds = elapsedSeconds(requestStartedAt);
-            log.info("ASR completed requestId={} audioSeconds={} decodeSeconds={} inferenceSeconds={} totalSeconds={}",
-                    requestId, decodedAudio.getDurationSeconds(), decodedAudio.getDecodeSeconds(),
-                    inferenceSeconds, totalSeconds);
+            log.info("ASR completed requestId={} uploadBytes={} audioSeconds={} sampleCount={} decodeSeconds={} inferenceSeconds={} totalSeconds={}",
+                    requestId, file.getSize(), decodedAudio.getDurationSeconds(), decodedAudio.getSamples().length,
+                    decodedAudio.getDecodeSeconds(), inferenceSeconds, totalSeconds);
             return new RecognitionResponse(
                     requestId,
                     text,
