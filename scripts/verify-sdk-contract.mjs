@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {createRequire} from 'node:module';
+import {fileURLToPath} from 'node:url';
 
 const root = new URL('../', import.meta.url);
 const read = path => fs.readFileSync(new URL(path, root), 'utf8');
@@ -15,7 +16,7 @@ const require = createRequire(import.meta.url);
 new vm.Script(sdkSource, {filename: 'offline-asr-sdk.js'});
 new vm.Script(appSource, {filename: 'app.js'});
 
-const exported = require(sdkPath);
+const exported = require(fileURLToPath(sdkPath));
 assert.equal(exported.VERSION, '1.0.0');
 assert.equal(typeof exported.SDK, 'function');
 

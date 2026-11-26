@@ -2,9 +2,9 @@ name: Offline ASR verification
 
 on:
   push:
-    branches: [master, "fix/**"]
+    branches: [master, develop, "fix/**"]
   pull_request:
-    branches: [master]
+    branches: [master, develop]
 
 jobs:
   windows-x64:
