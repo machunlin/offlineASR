@@ -19,6 +19,9 @@ public class FfmpegAudioDecoder {
 
     private static final int TARGET_SAMPLE_RATE = 16_000;
     private static final String PCM_FORMAT = "f32le";
+    // 多解码 1 秒用于识别并拒绝超长音频，同时限制 FFmpeg 的最大输出量。
+    private static final long DURATION_DETECTION_MARGIN_SECONDS = 1L;
+    private static final long BYTES_PER_SAMPLE = Float.BYTES;
 
     private final AsrProperties properties;
     private final FfmpegProcessLauncher processLauncher;
@@ -61,12 +64,13 @@ public class FfmpegAudioDecoder {
                 "-y",
                 "-v", "error",
                 "-i", inputPath.toString(),
+                "-t", String.valueOf(properties.getMaxDurationSeconds()
+                        + DURATION_DETECTION_MARGIN_SECONDS),
                 "-ac", "1",
                 "-ar", String.valueOf(TARGET_SAMPLE_RATE),
                 "-f", PCM_FORMAT,
                 outputPath.toString());
         try {
-            // 参数数组避免客户端文件名或 MIME 数据成为 shell 命令的一部分。
             return processLauncher.start(command);
         } catch (IOException exception) {
             throw new ApiException(
@@ -102,11 +106,20 @@ public class FfmpegAudioDecoder {
 
     private void validatePcmFile(Path outputPath) {
         try {
+            long maxPcmBytes = (properties.getMaxDurationSeconds()
+                    + DURATION_DETECTION_MARGIN_SECONDS)
+                    * TARGET_SAMPLE_RATE * BYTES_PER_SAMPLE;
             if (!Files.isRegularFile(outputPath) || Files.size(outputPath) == 0L) {
                 throw new ApiException(
                         HttpStatus.UNPROCESSABLE_ENTITY,
                         "AUDIO_DECODE_FAILED",
                         "音频解码失败，请使用有效录音重试");
+            }
+            if (Files.size(outputPath) > maxPcmBytes) {
+                throw new ApiException(
+                        HttpStatus.PAYLOAD_TOO_LARGE,
+                        "AUDIO_DURATION_EXCEEDED",
+                        "录音时长超过限制");
             }
         } catch (IOException exception) {
             throw new ApiException(
