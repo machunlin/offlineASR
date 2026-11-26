@@ -26,4 +26,26 @@ Windows x64 发布包：
 mvn -Pwindows-x64 clean test package
 ```
 
-自动化测试和 Windows CI 构建不能替代客户主机上的 JNI、Chrome 麦克风、文件上传、断网启动和性能验收。
+自动化测试和 Windows CI 构建不能替代客户主机上的 JNI、Chrome 麦克风、文件上传、断网启动和性能验收。 GitHub Actions 在
+Windows runner 上执行 Windows x64 Maven 测试/打包、PowerShell 脚本语法检查、原生库打包隔离检查和浏览器 JavaScript 合同测试。
+
+## Deployment assets
+
+Windows 部署包需要单独放入 Java 11 x64 Runtime、官方 sherpa-onnx v2.0.3 Windows x64 native JAR 构建出的应用
+JAR、SenseVoiceSmall INT8 模型、tokens.txt 和 Windows FFmpeg。Windows 包不能包含 macOS ARM64 native library。
+
+## Validation boundary
+
+自动化测试、Windows CI 构建和 native JAR 静态打包检查均不能替代目标客户主机上的 JNI 加载、Chrome
+麦克风、文件上传、断网启动、服务化运行及性能验收。现场验收项目见部署手册。
+
+## Current verification status (2026-11-26)
+
+Branch `fix/asr-windows-hardening` (`b8ee67c`) has passed macOS JAR startup, model/JNI inference, valid WAV HTTP
+recognition, JavaScript contract and Windows CI static packaging. It is not yet release-ready: the macOS startup script,
+HTTP error contract, duration requirement alignment, timeouts, frontend acceptance fields and Windows service/package
+configuration still need correction.
+
+See [测试报告](docs/测试报告.md), [优化调整建议报告](docs/优化调整建议报告.md)
+and [测试计划与用例](docs/测试计划与用例.md) for the exact passed, failed and unverified items. Do not treat macOS or
+Windows CI results as target Windows machine, Chrome microphone, offline-mode or customer CPU validation.

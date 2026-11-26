@@ -48,3 +48,38 @@ Use this skill for this repository only. Preserve the selected stack: Java 11, S
 ## Maintenance
 
 When a new verified issue materially changes build, model, deployment, or recovery decisions, update this Skill and the corresponding evidence document in the same change. Do not turn one-off network instability into a universal rule.
+
+## Verified branch guardrails（2026-11-26）
+
+These findings are for commit `b8ee67c` and must be rechecked after fixes:
+
+- The requirement baseline is still 600 seconds unless the project owner formally changes it. Do not treat the branch's
+  60-second frontend/backend defaults as the requirement without an approved requirement change.
+- Always run Maven with `clean` after switching between `macos-arm64` and `windows-x64`. A non-clean default-profile
+  package after a Windows build reused stale target content and failed with `UnsatisfiedLinkError: no sherpa-onnx-jni`.
+- As of this commit, `scripts/mac-start.sh` is not executable and has an unclosed quote on line 3. Run `bash -n` and
+  attempt the actual script before claiming script deployment works.
+- Unit tests with `MockMultipartFile` do not cover Servlet-level multipart failures. Verify real HTTP requests for
+  non-multipart, missing `file`, oversized upload, invalid media and the configured duration boundary.
+- As of this commit, the real HTTP contract returned 500 for missing multipart and oversized upload, and 422 for invalid
+  media against the required 400/413/415 statuses. One oversized request also produced repeated full exception stacks.
+  Treat this as unresolved until integration tests prove otherwise.
+- `DefaultFfmpegProcessLauncher` currently discards stderr and the timeout path does not wait for forced termination. A
+  field diagnosis must not claim FFmpeg root cause from exit code alone.
+- On Windows, `deploy/windows-x64/config/application.yml` still overrides the packaged default. Check the effective
+  property under the exact foreground and WinSW startup paths; do not trust a health response or a single YAML file.
+- `windows-package.bat` does not currently copy every script listed in the delivery manual, and
+  `windows-verify-package.ps1` only enforces a minimum manifest count. Run the actual package script and assert the
+  complete asset set before marking a Windows package complete.
+
+## Additional verification sequence for this branch
+
+1. `bash -n scripts/mac-start.sh` and actual `./scripts/mac-start.sh` startup.
+2. `mvn clean test package`, then `node scripts/verify-js-contract.mjs`.
+3. Start the packaged JAR and send real HTTP valid, missing-file, oversized, invalid-media and duration-boundary
+   requests.
+4. Inspect `temp/` after each request and sample the log for one-line controlled errors rather than repeated stacks.
+5. Run `./scripts/verify-stage-three.sh`; remember it ends with the Windows profile, so clean-build the macOS profile
+   before any subsequent local JAR test.
+6. For Windows work, separately verify the package script, checksum coverage, foreground startup and WinSW service
+   startup with effective configuration readback.

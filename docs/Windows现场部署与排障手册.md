@@ -71,4 +71,19 @@ offline-asr/
 - [ ] 清理任务不递归删除子目录
 - [ ] 断网后重新启动仍可识别
 
-自动化测试不能替代目标客户 Windows 主机上的 JNI、Chrome 麦克风、文件上传、断网启动和性能验收。
+自动化测试不能替代目标客户 Windows 主机上的 JNI、Chrome 麦克风、文件上传、断网启动和性能验收。 静态脚本检查和 GitHub Actions
+Windows 构建不等于客户机器实机验收。每个客户现场仍需完成上述麦克风、文件上传、JNI、断网和服务测试，并记录 Windows 版本、CPU、Java
+版本、模型哈希和结果。
+
+## 8. 2026-11-26 发布前验收提醒
+
+当前分支已完成 macOS 本机 JAR、HTTP 有效 WAV 和 Windows CI 静态构建验证，但以下项目仍是发布阻断项，详见
+`docs/优化调整建议报告.md`：
+
+1. `scripts/mac-start.sh` 当前存在语法错误且没有可执行位，不能作为已验证启动方式。
+2. 需求 V2.2 的录音上限仍为 600 秒，当前前端和后端默认值被改为 60 秒；未经正式需求变更不得作为验收基线。
+3. Windows 外部配置仍含 `max-duration-seconds: 600`，WinSW 配置未设置 `ASR_MAX_DURATION_SECONDS`，前台脚本却设置
+   60，服务与前台行为不一致。
+4. 外部配置硬编码 `server.address: 127.0.0.1`，会屏蔽 `ASR_HOST` 覆盖；在明确批准局域网访问前仍应保持本机监听。
+5. 新增的 `windows-diagnose.bat` 尚未被 `windows-package.bat` 复制进发布目录；发布包和哈希覆盖必须在 Windows 实机前补齐。
+6. Chrome 真麦克风、5 条真实普通话语料、断网重启、WinSW 服务、VC++ Runtime 和目标机性能仍未验证，不得用本手册中的静态检查替代实机结论。
