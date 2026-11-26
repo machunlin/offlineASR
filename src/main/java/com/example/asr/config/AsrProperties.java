@@ -10,7 +10,6 @@ public class AsrProperties {
     private static final long DEFAULT_MAX_UPLOAD_MB = 50;
     private static final long DEFAULT_MAX_DURATION_SECONDS = 60;
     private static final long DEFAULT_DECODE_TIMEOUT_SECONDS = 60;
-    private static final long DEFAULT_INFERENCE_TIMEOUT_SECONDS = 120;
     private static final long DEFAULT_QUEUE_TIMEOUT_SECONDS = 5;
 
     private int threads = DEFAULT_THREADS;
@@ -20,7 +19,6 @@ public class AsrProperties {
     private long maxUploadMb = DEFAULT_MAX_UPLOAD_MB;
     private long maxDurationSeconds = DEFAULT_MAX_DURATION_SECONDS;
     private long decodeTimeoutSeconds = DEFAULT_DECODE_TIMEOUT_SECONDS;
-    private long inferenceTimeoutSeconds = DEFAULT_INFERENCE_TIMEOUT_SECONDS;
     private long queueTimeoutSeconds = DEFAULT_QUEUE_TIMEOUT_SECONDS;
 
     public int getThreads() { return threads; }
@@ -64,15 +62,6 @@ public class AsrProperties {
 
     public void setDecodeTimeoutSeconds(long decodeTimeoutSeconds) {
         this.decodeTimeoutSeconds = requirePositive(decodeTimeoutSeconds, "解码超时");
-    }
-
-    /**
-     * 保留配置兼容性。JNI 同步推理无法由 Java Future 安全强制终止，因此该值不是硬超时保证。
-     */
-    public long getInferenceTimeoutSeconds() { return inferenceTimeoutSeconds; }
-
-    public void setInferenceTimeoutSeconds(long inferenceTimeoutSeconds) {
-        this.inferenceTimeoutSeconds = requirePositive(inferenceTimeoutSeconds, "推理超时");
     }
 
     public long getQueueTimeoutSeconds() { return queueTimeoutSeconds; }
