@@ -9,7 +9,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -45,7 +47,9 @@ public class AsrService {
             gateAcquired = acquireInferenceGate();
             inputPath = temporaryAudioStorage.createFilePath(getExtension(filename));
             pcmPath = temporaryAudioStorage.createFilePath("pcm");
-            file.transferTo(inputPath);
+            try (var inputStream = file.getInputStream()) {
+                Files.copy(inputStream, inputPath, StandardCopyOption.REPLACE_EXISTING);
+            }
             log.info("音频文件已保存，requestId={}，路径={}，文件大小={}字节",
                     requestId, inputPath.toAbsolutePath(), file.getSize());
 
