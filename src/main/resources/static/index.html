@@ -4,13 +4,13 @@
     <meta charset="utf-8">
     <meta content="width=device-width,initial-scale=1" name="viewport">
     <title>离线语音识别</title>
-    <!-- 相对路径可避免直接打开文件时被解析为 file:///style.css。正式使用仍必须经 Spring Boot 服务访问。 -->
     <link href="style.css" rel="stylesheet">
 </head>
 <body>
 <main>
     <h1>离线中文语音识别</h1>
     <p id="status">准备中</p>
+    <p id="recording-limit">单次录音最长 60 秒，剩余时间：<strong id="countdown">60 秒</strong></p>
     <p hidden id="local-file-hint">
         当前页面通过本地文件打开，无法连接识别服务。请先启动应用，再访问
         <a href="http://127.0.0.1:8080/">http://127.0.0.1:8080/</a>。
