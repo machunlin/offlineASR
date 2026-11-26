@@ -14,7 +14,6 @@ import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.text.Normalizer;
 import java.util.ArrayList;
-import java.util.HexFormat;
 import java.util.List;
 import java.util.Locale;
 
@@ -78,6 +77,8 @@ class AsrAccuracyTest {
                         "识别结果为空：" + sample.fileName);
                 assertTrue(response.getAudioDuration() > 0,
                         "识别返回的音频时长无效：" + sample.fileName);
+                assertTrue(Math.abs(response.getAudioDuration() - sample.duration) < 1.0,
+                        "识别音频时长与清单差异过大：" + sample.fileName);
 
                 int[] reference = normalize(sample.reference);
                 int[] hypothesis = normalize(response.getText());
@@ -105,12 +106,11 @@ class AsrAccuracyTest {
 
             double corpusCer = totalEdits / (double) totalReferenceCharacters;
             System.out.printf(
-                    "%n========== 测试集汇总 ==========%n样本数量：%d%n参考字符数：%d%n总编辑距离：%d%n整体 CER：%.2f%%%n字符准确率参考值：%.2f%%%n==============================%n",
+                    "%n========== 测试集汇总 ==========%n样本数量：%d%n参考字符数：%d%n总编辑距离：%d%n整体 CER：%.2f%%%n==============================%n",
                     samples.size(),
                     totalReferenceCharacters,
                     totalEdits,
-                    corpusCer * 100.0,
-                    Math.max(0.0, 1.0 - corpusCer) * 100.0);
+                    corpusCer * 100.0);
         } finally {
             engine.close();
         }
@@ -161,7 +161,11 @@ class AsrAccuracyTest {
 
     private String sha256(byte[] content) throws Exception {
         byte[] digest = MessageDigest.getInstance("SHA-256").digest(content);
-        return HexFormat.of().formatHex(digest);
+        StringBuilder result = new StringBuilder(digest.length * 2);
+        for (byte value : digest) {
+            result.append(String.format(Locale.ROOT, "%02x", value & 0xff));
+        }
+        return result.toString();
     }
 
     private int[] normalize(String text) {

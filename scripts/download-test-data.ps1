@@ -32,7 +32,7 @@ foreach ($row in $rows) {
     }
 
     if (-not (Test-Path $audioPath)) { throw "音频文件缺失：$audioPath" }
-    $probeJson = & ffprobe -v error -select_streams a:0 -show_entries stream=sample_rate -show_entries format=duration -of json $audioPath
+    $probeJson = & ffprobe -v error -select_streams a:0 -show_entries stream=sample_rate:format=duration -of json $audioPath
     if ($LASTEXITCODE -ne 0) { throw "音频元数据读取失败：$($row.file)" }
     $probe = ($probeJson -join "`n") | ConvertFrom-Json
     if (-not $probe.streams -or -not $probe.format.duration) { throw "音频元数据不完整：$($row.file)" }
