@@ -8,6 +8,7 @@ $Root = (Resolve-Path -LiteralPath $Root).Path
 $manifestPath = Join-Path $Root 'checksums.sha256'
 $assets = @(
     'app/offline-asr.jar',
+    'jdk/bin/java.exe',
     'models/SenseVoiceSmall/model.int8.onnx',
     'models/SenseVoiceSmall/tokens.txt',
     'ffmpeg/bin/ffmpeg.exe'
