@@ -211,7 +211,6 @@
                 return state;
             } catch (error) {
                 this._stopMonitorGraph();
-                this._stopStream();
                 throw this._normalizeError(error, 'AUDIO_MONITOR_FAILED', '启动麦克风音量检测失败');
             }
         }

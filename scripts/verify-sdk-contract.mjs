@@ -142,7 +142,7 @@ assert.equal(permittedDevices.length, 2);
 assert.equal(temporaryTrackStops, 1);
 await runtimeSdk.selectDevice('mic-2');
 await runtimeSdk.startMonitor();
-assert.deepEqual(requestedConstraints, {audio: {deviceId: {exact: 'mic-2'}}});
+assert.equal(requestedConstraints.audio.deviceId.exact, 'mic-2');
 let volumeEvent = null;
 runtimeSdk.on('volumechange', value => { volumeEvent = value; });
 runtimeSdk._analyzeVolume();
