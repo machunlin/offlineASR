@@ -14,10 +14,15 @@ if not exist "%MODEL_DIR%\tokens.txt" echo [ERROR] 缺少 tokens.txt & exit /b 1
 if not exist "%FFMPEG_EXE%" echo [ERROR] 缺少 FFmpeg: %FFMPEG_EXE% & exit /b 1
 if not exist "%CONFIG_FILE%" echo [ERROR] 缺少配置文件: %CONFIG_FILE% & exit /b 1
 
+if not defined ASR_HOST set "ASR_HOST=127.0.0.1"
+if not defined ASR_MAX_DURATION_SECONDS set "ASR_MAX_DURATION_SECONDS=60"
 set "ASR_MODEL_DIR=%MODEL_DIR%"
 set "ASR_FFMPEG=%FFMPEG_EXE%"
+if not exist "%ROOT%\logs" mkdir "%ROOT%\logs"
+if not exist "%ROOT%\temp" mkdir "%ROOT%\temp"
+
 pushd "%ROOT%"
-"%JAVA_EXE%" -jar "%APP_JAR%" --spring.config.additional-location="file:%CONFIG_FILE%"
+"%JAVA_EXE%" -Dasr.log.dir="%ROOT%\logs" -jar "%APP_JAR%" --spring.config.additional-location="file:%CONFIG_FILE%"
 set "EXIT_CODE=%ERRORLEVEL%"
 popd
 exit /b %EXIT_CODE%
