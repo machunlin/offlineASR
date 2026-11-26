@@ -2,6 +2,8 @@ package com.example.asr.service;
 
 import com.example.asr.config.AsrProperties;
 import com.example.asr.exception.ApiException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
@@ -17,6 +19,7 @@ import java.util.concurrent.TimeUnit;
 @Component
 public class FfmpegAudioDecoder {
 
+    private static final Logger log = LoggerFactory.getLogger(FfmpegAudioDecoder.class);
     private static final int TARGET_SAMPLE_RATE = 16_000;
     private static final String PCM_FORMAT = "f32le";
     // 多解码 1 秒用于识别并拒绝超长音频，同时限制 FFmpeg 的最大输出量。
@@ -73,6 +76,7 @@ public class FfmpegAudioDecoder {
         try {
             return processLauncher.start(command);
         } catch (IOException exception) {
+            log.error("Unable to start FFmpeg decoder errorType={}", exception.getClass().getName(), exception);
             throw new ApiException(
                     HttpStatus.SERVICE_UNAVAILABLE,
                     "SERVICE_NOT_READY",
@@ -84,12 +88,14 @@ public class FfmpegAudioDecoder {
         try {
             if (!process.waitFor(properties.getDecodeTimeoutSeconds(), TimeUnit.SECONDS)) {
                 process.destroyForcibly();
+                log.warn("FFmpeg decoding timed out after {} seconds", properties.getDecodeTimeoutSeconds());
                 throw new ApiException(
                         HttpStatus.GATEWAY_TIMEOUT,
                         "PROCESSING_TIMEOUT",
                         "音频解码超时");
             }
             if (process.exitValue() != 0) {
+                log.warn("FFmpeg decoding failed exitCode={}", process.exitValue());
                 throw new ApiException(
                         HttpStatus.UNPROCESSABLE_ENTITY,
                         "AUDIO_DECODE_FAILED",
