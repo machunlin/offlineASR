@@ -13,3 +13,4 @@ logs/
 # 中文注释：本地下载的测试音频运行清单和缓存不纳入版本控制。
 /src/test/resources/test-data/manifest.tsv
 /src/test/resources/test-data/.download-cache/
+/.env
