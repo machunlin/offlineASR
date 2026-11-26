@@ -12,11 +12,15 @@
 
     const statusElement = document.querySelector('#status');
     const resultElement = document.querySelector('#result');
+    const resultMetaElement = document.querySelector('#result-meta');
     const startButton = document.querySelector('#start');
     const stopButton = document.querySelector('#stop');
     const clearButton = document.querySelector('#clear');
     const countdownElement = document.querySelector('#countdown');
     const localFileHint = document.querySelector('#local-file-hint');
+    const audioFileInput = document.querySelector('#audio-file');
+    const uploadButton = document.querySelector('#upload');
+    const fileInfoElement = document.querySelector('#file-info');
 
     function openedFromLocalFile() {
         return window.location && window.location.protocol === 'file:';
@@ -30,9 +34,7 @@
     }
 
     function showLocalFileHint() {
-        if (localFileHint) {
-            localFileHint.hidden = false;
-        }
+        if (localFileHint) localFileHint.hidden = false;
         showError(localFileError().message);
     }
 
@@ -40,13 +42,12 @@
         statusElement.textContent = message;
         startButton.disabled = false;
         stopButton.disabled = true;
+        uploadButton.disabled = !audioFileInput.files || audioFileInput.files.length === 0;
         stopCountdown();
     }
 
     function renderCountdown() {
-        if (countdownElement) {
-            countdownElement.textContent = remainingSeconds + ' 秒';
-        }
+        if (countdownElement) countdownElement.textContent = remainingSeconds + ' 秒';
     }
 
     function stopCountdown() {
@@ -81,9 +82,7 @@
     function stopRecording() {
         stopCountdown();
         stopButton.disabled = true;
-        if (recorder && recorder.state === 'recording') {
-            recorder.stop();
-        }
+        if (recorder && recorder.state === 'recording') recorder.stop();
     }
 
     async function parseResponse(response) {
@@ -94,15 +93,27 @@
         }
     }
 
-    /** Promise、回调和事件观察同一个最终结果，不重复提交音频。 */
+    function renderResult(payload, filename) {
+        resultElement.textContent = payload.text || '';
+        const details = [
+            filename ? '文件：' + filename : '来源：麦克风录音',
+            '音频时长：' + Number(payload.audioDuration || 0).toFixed(2) + ' 秒',
+            '解码耗时：' + Number(payload.decodeTime || 0).toFixed(3) + ' 秒',
+            '推理耗时：' + Number(payload.inferenceTime || 0).toFixed(3) + ' 秒',
+            '总耗时：' + Number(payload.totalTime || 0).toFixed(3) + ' 秒',
+            '请求 ID：' + (payload.requestId || ''),
+        ];
+        resultMetaElement.textContent = details.join(' | ');
+        statusElement.textContent = '识别完成';
+    }
+
+    /** 麦克风录音和文件上传共用同一个后端接口。 */
     window.OfflineASR = {
-        recognize: async audioBlob => {
-            if (openedFromLocalFile()) {
-                throw localFileError();
-            }
+        recognize: async (audioBlob, filename) => {
+            if (openedFromLocalFile()) throw localFileError();
             const requestId = crypto.randomUUID();
             const formData = new FormData();
-            formData.append('file', audioBlob, 'recording.webm');
+            formData.append('file', audioBlob, filename || 'recording.webm');
 
             let response;
             try {
@@ -123,9 +134,7 @@
                 };
             }
 
-            if (typeof window.onSpeechText === 'function') {
-                window.onSpeechText(payload.text);
-            }
+            if (typeof window.onSpeechText === 'function') window.onSpeechText(payload.text);
             window.dispatchEvent(new CustomEvent('asr-result', {
                 detail: {
                     text: payload.text,
@@ -144,6 +153,7 @@
             return;
         }
         startButton.disabled = true;
+        uploadButton.disabled = true;
         try {
             statusElement.textContent = '正在申请麦克风权限';
             mediaStream = await navigator.mediaDevices.getUserMedia({audio: true});
@@ -153,24 +163,23 @@
             recorder = new MediaRecorder(mediaStream, options);
             chunks = [];
             recorder.ondataavailable = event => {
-                if (event.data && event.data.size > 0) {
-                    chunks.push(event.data);
-                }
+                if (event.data && event.data.size > 0) chunks.push(event.data);
             };
             recorder.onstop = async () => {
                 stopTracks();
                 stopCountdown();
-                statusElement.textContent = '正在识别';
+                statusElement.textContent = '正在识别录音';
                 try {
                     const response = await window.OfflineASR.recognize(
-                        new Blob(chunks, {type: recorder.mimeType || 'audio/webm'}));
-                    resultElement.textContent = response.text;
-                    statusElement.textContent = '识别完成';
-                    startButton.disabled = false;
+                        new Blob(chunks, {type: recorder.mimeType || 'audio/webm'}),
+                        'recording.webm');
+                    renderResult(response, '');
                 } catch (error) {
                     showError(error.message || DEFAULT_ERROR_MESSAGE);
                 } finally {
+                    startButton.disabled = false;
                     stopButton.disabled = true;
+                    uploadButton.disabled = !audioFileInput.files || audioFileInput.files.length === 0;
                 }
             };
             recorder.onerror = event => {
@@ -189,12 +198,43 @@
 
     stopButton.onclick = stopRecording;
 
+    audioFileInput.onchange = () => {
+        const file = audioFileInput.files && audioFileInput.files[0];
+        uploadButton.disabled = !file;
+        fileInfoElement.textContent = file
+            ? '已选择：' + file.name + '（' + (file.size / 1024 / 1024).toFixed(2) + ' MB）'
+            : '尚未选择音频文件';
+    };
+
+    uploadButton.onclick = async () => {
+        if (openedFromLocalFile()) {
+            showLocalFileHint();
+            return;
+        }
+        const file = audioFileInput.files && audioFileInput.files[0];
+        if (!file) {
+            showError('请先选择音频文件');
+            return;
+        }
+        uploadButton.disabled = true;
+        startButton.disabled = true;
+        statusElement.textContent = '正在上传并识别：' + file.name;
+        try {
+            const response = await window.OfflineASR.recognize(file, file.name);
+            renderResult(response, file.name);
+        } catch (error) {
+            showError(error.message || DEFAULT_ERROR_MESSAGE);
+        } finally {
+            startButton.disabled = false;
+            uploadButton.disabled = !audioFileInput.files || audioFileInput.files.length === 0;
+        }
+    };
+
     clearButton.onclick = () => {
         resultElement.textContent = '';
+        resultMetaElement.textContent = '';
     };
 
     renderCountdown();
-    if (openedFromLocalFile()) {
-        showLocalFileHint();
-    }
+    if (openedFromLocalFile()) showLocalFileHint();
 })();

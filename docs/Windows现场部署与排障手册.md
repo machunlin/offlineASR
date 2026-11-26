@@ -17,12 +17,7 @@ offline-asr/
   models/SenseVoiceSmall/tokens.txt
   ffmpeg/bin/ffmpeg.exe
   config/application.yml
-  scripts/windows-start.bat
-  scripts/windows-status.bat
-  scripts/windows-install.bat
-  scripts/windows-stop.bat
-  scripts/windows-generate-checksums.ps1
-  scripts/windows-verify-package.ps1
+  scripts/
   logs/
   temp/
 ```
@@ -48,8 +43,9 @@ offline-asr/
 
 5. 在同一台主机的 Chrome 打开 `http://127.0.0.1:8080/`，检查页面状态。
 6. 点击开始录音，说一段 5–10 秒的普通话，点击结束录音，确认结果正确；再连续执行第二次，确认按钮恢复。
-7. 访问 `http://127.0.0.1:8080/api/asr/health`，要求 HTTP 200 且 `applicationStatus=READY`。
-8. 确认 `logs/offline-asr.log` 正常写入，停止前台进程按 Ctrl+C。
+7. 选择一段 WAV 或 MP3 音频文件，点击“上传并识别”，确认页面显示识别文本、音频时长和耗时。
+8. 访问 `http://127.0.0.1:8080/api/asr/health`，要求 HTTP 200 且 `applicationStatus=READY`。
+9. 确认 `logs/offline-asr.log` 正常写入，停止前台进程按 Ctrl+C。
 
 ## 4. 服务化运行
 
@@ -73,7 +69,7 @@ server:
 
 ## 6. 日志与排障
 
-日志位置：`logs/offline-asr.log`；按天滚动，压缩归档，最多保留 15 天。日志记录模型初始化、请求 ID、音频时长、解码耗时、推理耗时和错误堆栈；不记录音频内容及完整识别文本。
+日志位置：`logs/offline-asr.log`；按天滚动，压缩归档，最多保留 15 天。每次请求通过 requestId 关联日志，包含原始文件名、上传大小、临时输入文件路径、PCM 输出路径、采样率、采样数、音频时长、RMS、峰值、削波样本数、解码耗时、推理耗时及异常堆栈。日志不记录音频内容和完整识别文本。请求临时目录在请求结束时清理，日志中的路径用于定位请求处理过程。
 
 | 现象 | 检查方式 | 处理 |
 |---|---|---|
@@ -81,7 +77,8 @@ server:
 | health 返回 NOT_READY | 查看日志中的模型目录、JNI 初始化错误 | 核对模型文件、Windows x64 native JAR、Java x64 和 VC++ Runtime |
 | 找不到 FFmpeg | 检查 `ffmpeg/bin/ffmpeg.exe` 并执行 `-version` | 重新部署完整 FFmpeg 目录 |
 | 麦克风无法启动 | Chrome 地址栏站点权限、Windows 麦克风隐私设置 | 允许 localhost 使用麦克风，检查系统输入设备 |
-| 识别结果过短或为空 | 核对日志中的 audioSeconds、decodeSeconds、inferenceSeconds；保存一份脱敏复现录音供研发分析 | 确认录音时长、麦克风输入、FFmpeg 解码时长及模型文件版本 |
+| 上传音频无法识别 | 按 requestId 查看文件路径、上传字节数、FFmpeg 解码日志 | 确认文件格式可解码、大小不超过 50 MB、时长不超过 60 秒 |
+| 识别结果过短或为空 | 查看 audioSeconds、sampleCount、RMS、peak、clippedSamples 和推理耗时 | RMS 接近 0 表示音频可能接近静音；峰值/削波异常时检查输入增益；音频正常时再分析模型推理 |
 | 60 秒后自动停止 | 页面倒计时和服务端 max-duration-seconds | 属于预期限制；超过时长的请求由服务端拒绝 |
 | 服务启动即退出 | 检查日志和 Windows 事件查看器 | 核对 Java 版本、DLL 依赖、目录权限和配置文件 |
 
@@ -92,10 +89,11 @@ server:
 - [ ] health 返回 READY
 - [ ] Chrome 允许麦克风，5–10 秒普通话识别正确
 - [ ] 连续录音至少 3 次均可正常开始和结束
+- [ ] 上传 WAV/MP3 文件可显示识别文本和耗时
 - [ ] 60 秒倒计时到期后自动停止
 - [ ] 超过 60 秒的服务端请求被拒绝
 - [ ] 断开互联网后重新启动，仍可识别
 - [ ] 日志按天写入，滚动与 15 天保留策略生效
 - [ ] 服务停止、启动和重启流程通过（如部署为 Windows 服务）
 
-静态脚本检查和 GitHub Actions Windows 构建不等于客户机器实机验收。每个客户现场仍需完成上述麦克风、JNI、断网和服务测试，并记录 Windows 版本、CPU、Java 版本、模型哈希和结果。
+静态脚本检查和 GitHub Actions Windows 构建不等于客户机器实机验收。每个客户现场仍需完成上述麦克风、文件上传、JNI、断网和服务测试，并记录 Windows 版本、CPU、Java 版本、模型哈希和结果。

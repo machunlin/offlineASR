@@ -3,19 +3,25 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 
 const source = fs.readFileSync(new URL('../src/main/resources/static/app.js', import.meta.url), 'utf8');
+const html = fs.readFileSync(new URL('../src/main/resources/static/index.html', import.meta.url), 'utf8');
 const listeners = {};
 const dispatched = [];
 const elements = new Map([
   ['#status', {textContent: ''}],
   ['#result', {textContent: ''}],
+  ['#result-meta', {textContent: ''}],
   ['#countdown', {textContent: ''}],
   ['#start', {disabled: false, onclick: null}],
   ['#stop', {disabled: true, onclick: null}],
   ['#clear', {onclick: null}],
   ['#local-file-hint', {hidden: true}],
+  ['#audio-file', {files: [], onchange: null}],
+  ['#upload', {disabled: true, onclick: null}],
+  ['#file-info', {textContent: ''}],
 ]);
 
 let intervalCallback;
+let lastFormData;
 class FakeMediaRecorder {
   static last;
   static isTypeSupported() { return true; }
@@ -35,9 +41,14 @@ class FakeMediaRecorder {
   }
 }
 
+class FakeFormData {
+  constructor() { this.values = []; lastFormData = this; }
+  append(...args) { this.values.push(args); }
+}
+
 const context = {
   Blob,
-  FormData,
+  FormData: FakeFormData,
   MediaRecorder: FakeMediaRecorder,
   CustomEvent: class CustomEvent {
     constructor(type, init) { this.type = type; this.detail = init.detail; }
@@ -71,16 +82,20 @@ context.fetch = async () => ({
     requestId: 'js-contract-001',
     text: '识别完成',
     audioDuration: 1,
+    decodeTime: 0.1,
     inferenceTime: 0.2,
+    totalTime: 0.3,
   }),
 });
 
-const result = await context.window.OfflineASR.recognize(new Blob(['audio']));
+const result = await context.window.OfflineASR.recognize(new Blob(['audio']), 'sample.wav');
 assert.equal(result.text, '识别完成');
 assert.equal(callbackCount, 1);
 assert.equal(dispatched.length, 1);
 assert.equal(dispatched[0].type, 'asr-result');
 assert.equal(dispatched[0].detail.requestId, 'js-contract-001');
+assert.equal(lastFormData.values[0][0], 'file');
+assert.equal(lastFormData.values[0][2], 'sample.wav');
 
 context.fetch = async () => ({ok: false, json: async () => {throw new Error('invalid json');}});
 await assert.rejects(
@@ -93,7 +108,7 @@ await assert.rejects(
   () => context.window.OfflineASR.recognize(new Blob(['audio'])),
   error => error.code === 'LOCAL_FILE_OPEN' && error.message.includes('127.0.0.1:8080'),
 );
-await context.window.document.querySelector('#start').onclick();
+await elements.get('#start').onclick();
 assert.match(elements.get('#status').textContent, /127.0.0.1:8080/);
 
 context.window.location = {protocol: 'http:'};
@@ -104,7 +119,9 @@ context.fetch = async () => ({
     requestId: 'js-contract-001',
     text: '识别完成',
     audioDuration: 1,
+    decodeTime: 0.1,
     inferenceTime: 0.2,
+    totalTime: 0.3,
   }),
 });
 await elements.get('#start').onclick();
@@ -118,4 +135,15 @@ assert.equal(elements.get('#status').textContent, '识别完成');
 assert.equal(elements.get('#start').disabled, false);
 assert.equal(elements.get('#stop').disabled, true);
 
-console.log('JavaScript ASR contract and 60-second recording timer: PASS');
+const uploadedFile = {name: 'speech.wav', size: 2048};
+elements.get('#audio-file').files = [uploadedFile];
+elements.get('#audio-file').onchange();
+assert.equal(elements.get('#upload').disabled, false);
+assert.match(elements.get('#file-info').textContent, /speech.wav/);
+await elements.get('#upload').onclick();
+assert.equal(elements.get('#status').textContent, '识别完成');
+assert.match(elements.get('#result-meta').textContent, /speech.wav/);
+
+assert.match(html, /id="audio-file"/);
+assert.match(html, /id="upload"/);
+console.log('JavaScript ASR contract, recording timer and audio upload: PASS');
