@@ -34,7 +34,7 @@ class FfmpegAudioDecoderTest {
 
         assertEquals(List.of(
                 "ffmpeg", "-y", "-v", "error", "-i", input.toString(),
-                "-t", "61", "-ac", "1", "-ar", "16000", "-f", "f32le", output.toString()),
+                "-t", "601", "-ac", "1", "-ar", "16000", "-f", "f32le", output.toString()),
                 launcher.command);
         assertEquals(16_000, decoded.getSampleRate());
         assertEquals(1, decoded.getSamples().length);
@@ -44,7 +44,7 @@ class FfmpegAudioDecoderTest {
     void rejectsPcmLargerThanTheConfiguredDurationBeforeReadingIt() throws Exception {
         AsrProperties properties = new AsrProperties();
         CapturingProcessLauncher launcher = new CapturingProcessLauncher(
-                false, 0, (61 * 16_000 * Float.BYTES) + 4);
+                false, 0, (601 * 16_000 * Float.BYTES) + 4);
         FfmpegAudioDecoder decoder = new FfmpegAudioDecoder(properties, launcher);
         Path input = Files.write(temporaryDirectory.resolve("long-input.webm"), new byte[]{1});
 

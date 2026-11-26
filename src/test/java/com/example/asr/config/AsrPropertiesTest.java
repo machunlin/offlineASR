@@ -15,10 +15,10 @@ class AsrPropertiesTest {
     }
 
     @Test
-    void usesSixtySecondsAsTheDefaultRecordingLimit() {
+    void usesTenMinutesAsTheDefaultRecordingLimit() {
         AsrProperties properties = new AsrProperties();
 
-        assertEquals(60, properties.getMaxDurationSeconds());
+        assertEquals(600, properties.getMaxDurationSeconds());
     }
 
     @Test
