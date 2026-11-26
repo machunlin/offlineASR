@@ -38,7 +38,7 @@ offline-asr/
 3. 执行 `scripts\\windows-verify-package.ps1` 完成部署包校验。
 4. 执行 `scripts\\windows-start.bat` 启动服务。
 5. 在同一台主机 Chrome 打开 `http://127.0.0.1:8080/`。
-6. 如需单独排查麦克风，打开 `http://127.0.0.1:8080/index-test.html`，点击“启动检测”，对着麦克风说话，观察实时音量条、RMS、Peak 和音轨状态。
+6. 如需单独排查麦克风，打开 `http://127.0.0.1:8080/microphone-test.html`，点击“启动检测”，对着麦克风说话，观察实时音量条、RMS、Peak 和音轨状态。
 7. 在检测页录制 5～10 秒并回放，确认录音文件确实有声音。检测页只在浏览器本地分析和回放，不会上传音频，也不会调用 ASR 接口。
 8. 检测通过后回到首页，测试麦克风录音识别和 WAV/MP3 文件上传识别。
 9. 检查 `logs/offline-asr.log`，并确认 `temp/` 下原始音频和 PCM 文件命名符合时间戳格式。
