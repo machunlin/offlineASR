@@ -13,6 +13,20 @@
 
     <section class="panel" aria-labelledby="record-title">
         <h2 id="record-title">麦克风录音</h2>
+        <div class="device-control">
+            <label for="microphone-device">录音输入设备</label>
+            <div class="device-row">
+                <select id="microphone-device" aria-label="选择录音输入设备">
+                    <option value="">系统默认麦克风</option>
+                </select>
+                <button id="refresh-microphones" type="button" class="secondary">刷新设备</button>
+            </div>
+            <p id="microphone-hint" class="hint">首次使用请允许浏览器访问麦克风，然后选择内置麦克风或蓝牙耳机麦克风。</p>
+            <div class="input-meter" role="meter" aria-label="麦克风实时输入音量" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                <div id="input-meter-fill"></div>
+            </div>
+            <p id="microphone-state" class="hint">尚未连接麦克风</p>
+        </div>
         <p id="recording-limit">单次录音最长 60 秒，剩余时间：<strong id="countdown">60 秒</strong></p>
         <div class="actions">
             <button id="start" type="button">开始录音</button>
