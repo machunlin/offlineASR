@@ -7,7 +7,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class AsrProperties {
     private static final int DEFAULT_THREADS = 2;
     private static final long DEFAULT_MAX_UPLOAD_MB = 50;
-    private static final long DEFAULT_MAX_DURATION_SECONDS = 60;
+    private static final long DEFAULT_MAX_DURATION_SECONDS = 600;
     private static final long DEFAULT_DECODE_TIMEOUT_SECONDS = 60;
     private static final long DEFAULT_QUEUE_TIMEOUT_SECONDS = 5;
     private static final long DEFAULT_TEMP_RETENTION_HOURS = 4;
