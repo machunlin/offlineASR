@@ -6,12 +6,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 import java.util.stream.Stream;
@@ -55,7 +56,7 @@ public class TemporaryAudioStorage {
         throw new IOException("无法生成不重复的临时音频文件名");
     }
 
-    /** 后台定期清理创建时间超过保留期限的普通文件，不递归处理子目录。 */
+    /** 后台定期清理文件名时间戳超过保留期限的普通文件，不依赖操作系统创建时间属性。 */
     @Scheduled(fixedDelayString = "${asr.temp-cleanup-interval-ms:600000}")
     public void cleanupExpiredFiles() {
         try {
@@ -70,8 +71,8 @@ public class TemporaryAudioStorage {
         try (Stream<Path> paths = Files.list(rootDirectory)) {
             paths.filter(Files::isRegularFile).forEach(file -> {
                 try {
-                    BasicFileAttributes attributes = Files.readAttributes(file, BasicFileAttributes.class);
-                    if (nowMillis - attributes.creationTime().toMillis() > retentionMillis) {
+                    long createdAt = parseCreationTime(file);
+                    if (createdAt >= 0 && nowMillis - createdAt > retentionMillis) {
                         Files.deleteIfExists(file);
                         log.info("已清理过期临时音频文件：{}", file.getFileName());
                     }
@@ -79,6 +80,22 @@ public class TemporaryAudioStorage {
                     log.warn("删除临时音频文件失败：{}", file, exception);
                 }
             });
+        }
+    }
+
+    private long parseCreationTime(Path file) {
+        String filename = file.getFileName().toString();
+        int dot = filename.lastIndexOf('.');
+        if (dot != 14 || !filename.substring(0, dot).matches("\\d{14}")) {
+            log.warn("临时目录中存在不符合命名规则的文件，跳过清理：{}", filename);
+            return -1L;
+        }
+        try {
+            return LocalDateTime.parse(filename.substring(0, dot), FORMAT)
+                    .atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+        } catch (RuntimeException exception) {
+            log.warn("无法解析临时文件名时间戳，跳过清理：{}", filename);
+            return -1L;
         }
     }
 }
