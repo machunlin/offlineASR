@@ -26,6 +26,12 @@ done
     echo "部署包必须包含 Java 11 Runtime" >&2
     exit 1
 }
+
+java_properties="$("${ROOT}/jdk/bin/java" -XshowSettings:properties -version 2>&1)"
+grep -Eq 'os.arch[[:space:]]*=[[:space:]]*(amd64|x86_64)' <<< "${java_properties}" || {
+    echo "部署包必须包含 Linux x86_64 Java Runtime" >&2
+    exit 1
+}
 "${ROOT}/ffmpeg/bin/ffmpeg" -version >/dev/null 2>&1 || {
     echo "部署包内 FFmpeg 无法执行" >&2
     exit 1
