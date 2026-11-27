@@ -60,6 +60,11 @@
             <h2 id="result-title">识别结果</h2>
             <button id="clear" type="button" class="secondary">清空</button>
         </div>
+        <div id="result-loading" class="result-loading" role="status" aria-live="polite" hidden>
+            <span class="loading-spinner" aria-hidden="true"></span>
+            <span>正在识别，请稍候…</span>
+            <span class="loading-hint">音频正在上传或处理中，网络较慢时请耐心等待</span>
+        </div>
         <pre id="result" aria-live="polite"></pre>
         <p id="result-meta" class="hint"></p>
     </section>
