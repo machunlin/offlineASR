@@ -2,6 +2,8 @@
 
 适用目标：Ubuntu 22.04 LTS x86_64。OfflineASR 应用包只包含应用文件，外部运行依赖由客户或技术支持工程师准备。
 
+> 本文负责依赖准备和应用部署。完整的目标机验收步骤、自动验收脚本用法、断网重启验证及结果记录，参见 [Linux 实机部署与验收手册](04-Linux实机部署与验收手册.md)。
+
 ## 1. 应用包
 
 应用包包含 `app/offline-asr.jar`、`config/application.yml`、启动脚本、校验脚本、`LICENSE`、`THIRD_PARTY_NOTICES.md`、第三方组件清单、Maven 依赖清单、SBOM、许可材料和 `checksums.sha256`。
