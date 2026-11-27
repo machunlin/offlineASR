@@ -22,6 +22,7 @@
         upload: $('#upload'),
         fileInfo: $('#file-info'),
         result: $('#result'),
+        resultLoading: $('#result-loading'),
         resultMeta: $('#result-meta'),
         clear: $('#clear'),
         localFileHint: $('#local-file-hint')
@@ -101,7 +102,20 @@
             + '；静音：' + (state.muted ? '是' : '否');
     }
 
+    function beginRecognition(message) {
+        // 每次开始识别前清空上一次结果，避免旧内容造成误解。
+        elements.result.textContent = '';
+        elements.resultMeta.textContent = '';
+        elements.resultLoading.hidden = false;
+        setStatus(message);
+    }
+
+    function endRecognition() {
+        elements.resultLoading.hidden = true;
+    }
+
     function renderResult(payload, filename) {
+        endRecognition();
         elements.result.textContent = payload.text || '';
         elements.resultMeta.textContent = [
             filename ? '文件：' + filename : '来源：麦克风录音',
@@ -192,11 +206,12 @@
         if (!lastRecording) return;
         elements.recognizeRecording.disabled = true;
         setBusy(true);
-        setStatus('正在识别麦克风录音');
+        beginRecognition('正在识别麦克风录音');
         try {
             const payload = await sdk.recognize(lastRecording, {filename: 'recording.webm'});
             renderResult(payload, '');
         } catch (error) {
+            endRecognition();
             showError(error);
         } finally {
             elements.recognizeRecording.disabled = false;
@@ -209,11 +224,12 @@
         if (!file) return;
         elements.upload.disabled = true;
         elements.start.disabled = true;
-        setStatus('正在上传并识别：' + file.name);
+        beginRecognition('正在上传并识别：' + file.name);
         try {
             const payload = await sdk.recognize(file, {filename: file.name});
             renderResult(payload, file.name);
         } catch (error) {
+            endRecognition();
             showError(error);
         } finally {
             setBusy(false);
