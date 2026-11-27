@@ -8,13 +8,11 @@ if not exist "%ROOT%\lib\sherpa-onnx-native-lib-win-x64-2.0.3.jar" (
   exit /b 1
 )
 pushd "%ROOT%"
-if not "%ASR_SKIP_MAVEN_BUILD%"=="1" (
-  call "%MAVEN%" -Pwindows-x64 -Dmaven.repo.local=.m2 clean test package
-  if errorlevel 1 (
-    set "BUILD_ERROR=%ERRORLEVEL%"
-    goto :build_failed
-  )
-)
+if "%ASR_SKIP_MAVEN_BUILD%"=="1" goto :skip_build
+call "%MAVEN%" -Pwindows-x64 -Dmaven.repo.local=.m2 clean test package
+if errorlevel 1 goto :build_failed
+
+:skip_build
 
 set "PACKAGE=dist\windows-x64"
 if exist "%PACKAGE%" (
@@ -46,8 +44,9 @@ popd
 exit /b 0
 
 :build_failed
+echo [ERROR] Maven 构建失败。
 popd
-exit /b %BUILD_ERROR%
+exit /b 1
 
 :copy_failed
 echo [ERROR] 复制部署包文件失败，请检查磁盘空间和目录权限。
