@@ -70,14 +70,7 @@ systemd 服务文件是模板。未经检查运行用户、路径、权限并获
 
 ## 5. macOS ARM64
 
-macOS ARM64 当前主要用于开发和本机验证：
-
-1. 确认 JDK 11、Maven、FFmpeg 和模型文件。
-2. 执行 bash scripts/mac-start.sh。
-3. 访问 http://127.0.0.1:8080。
-4. 完成健康检查和真实音频识别。
-
-不要将 macOS ARM64 原生库放入 Windows 或 Linux 包。
+按 [macOS 运行指南](05-macOS运行指南.md) 准备 Java 11、Maven、FFmpeg 和模型文件，执行 bash scripts/mac-start.sh，并完成健康检查与真实音频识别。macOS ARM64 原生库不得放入 Windows 或 Linux 包。
 
 ## 6. 通用验收
 
