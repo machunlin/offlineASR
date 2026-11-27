@@ -36,7 +36,13 @@ powershell -ExecutionPolicy Bypass -File .\scripts\windows-verify-package.ps1
 
 清单覆盖部署目录中的全部文件（不包含清单自身）。验证会检查必要资产、Java 11 x64、FFmpeg、SHA-256、重复路径及未纳入清单的文件。
 
-验证通过后再压缩整个目录交付。生成清单后不得修改或替换文件。
+验证通过后，在当前目录执行以下命令生成交付压缩包：
+
+~~~powershell
+Compress-Archive -Path .\\* -DestinationPath ..\\OfflineASR-windows-x64.zip
+~~~
+
+生成清单后不得修改或替换文件。
 
 ## 5. 客户机部署
 
