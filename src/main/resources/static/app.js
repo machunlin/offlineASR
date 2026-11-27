@@ -46,6 +46,7 @@
     function setBusy(busy) {
         elements.start.disabled = busy || recording;
         elements.upload.disabled = busy || !elements.audioFile.files || !elements.audioFile.files.length;
+        elements.recognizeRecording.disabled = busy || !lastRecording;
         elements.refresh.disabled = busy || recording;
         elements.device.disabled = busy || recording;
     }
@@ -224,8 +225,7 @@
     async function uploadFile() {
         const file = elements.audioFile.files && elements.audioFile.files[0];
         if (!file) return;
-        elements.upload.disabled = true;
-        elements.start.disabled = true;
+        setBusy(true);
         beginRecognition('正在上传并识别：' + file.name);
         try {
             const payload = await sdk.recognize(file, {filename: file.name});
