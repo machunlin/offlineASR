@@ -51,13 +51,39 @@
 2. SHA-256：`7305f7905bfcf77fa0b39388a313f3da35c68d971661a65475b56fb2162c8e63`
 3. 解压后放入 `models/SenseVoiceSmall/`，确保包含 `model.int8.onnx` 和 `tokens.txt`。
 
-### 2.4 FFmpeg
+### 2.4 FFmpeg（固定版本 9.0.2）
 
-- 项目不提供 macOS FFmpeg 二进制。
-- 推荐使用 Homebrew 安装：`brew install ffmpeg`。
-- 如需严格固定版本，可下载源码构建：https://ffmpeg.org/releases/ffmpeg-9.0.2.tar.xz
-- 验证：`ffmpeg -version`
-- 可用 `ASR_FFMPEG` 指定可执行文件路径。
+项目不提供 macOS FFmpeg 二进制。为避免 Homebrew 滚动升级导致版本不可复现，建议从 FFmpeg 官方源码构建固定版本 `9.0.2`。前置条件：安装 Xcode Command Line Tools（`xcode-select --install`），确保 `clang`、`make`、`xz` 可用。
+
+```bash
+curl -fL https://ffmpeg.org/releases/ffmpeg-9.0.2.tar.xz -o ffmpeg-9.0.2.tar.xz
+printf '%s  %s\\n' '8c3850283eb25fa026482078a04051e0be17347b09ef81a0849bec15a96e002e' 'ffmpeg-9.0.2.tar.xz' | shasum -a 256 -c -
+tar -xJf ffmpeg-9.0.2.tar.xz
+cd ffmpeg-9.0.2
+./configure \\
+  --prefix="$HOME/opt/ffmpeg-9.0.2" \\
+  --disable-debug \\
+  --disable-doc \\
+  --disable-ffplay \\
+  --disable-network \\
+  --disable-autodetect \\
+  --disable-shared \\
+  --enable-static \\
+  --enable-ffmpeg
+make -j"$(sysctl -n hw.ncpu)"
+make install
+```
+
+SHA-256 `8c3850283eb25fa026482078a04051e0be17347b09ef81a0849bec15a96e002e` 是第三方 Fossies 对同一官方源码归档公布的校验值，不是 FFmpeg 官方发布页提供的 checksum；如客户要求强制验证发布者身份，应另外验证 FFmpeg 官方 `.asc` 签名。版本说明：[FFmpeg 9.0.2](https://www.ffmpeg.org/download.html)。
+
+配置和验证：
+
+```bash
+export ASR_FFMPEG="$HOME/opt/ffmpeg-9.0.2/bin/ffmpeg"
+"$ASR_FFMPEG" -version
+```
+
+成功判定：输出包含 `ffmpeg version 9.0.2`。将 `ASR_FFMPEG` 配置到启动 OfflineASR 的 shell 环境中。
 
 ## 3. 第二阶段：启动 OfflineASR
 
