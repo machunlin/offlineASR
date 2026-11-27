@@ -1,4 +1,4 @@
-$ErrorActionPreference = "Stop"
+﻿$ErrorActionPreference = "Stop"
 
 # 中文注释：从项目目录定位测试音频目录，确保脚本可从任意工作目录执行。
 $projectRoot = Split-Path -Parent $PSScriptRoot
