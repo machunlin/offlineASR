@@ -57,24 +57,24 @@
 
 ```bash
 curl -fL https://ffmpeg.org/releases/ffmpeg-9.0.2.tar.xz -o ffmpeg-9.0.2.tar.xz
-printf '%s  %s\\n' '8c3850283eb25fa026482078a04051e0be17347b09ef81a0849bec15a96e002e' 'ffmpeg-9.0.2.tar.xz' | shasum -a 256 -c -
+printf '%s  %s\n' '8c3850283eb25fa026482078a04051e0be17347b09ef81a0849bec15a96e002e' 'ffmpeg-9.0.2.tar.xz' | shasum -a 256 -c -
 tar -xJf ffmpeg-9.0.2.tar.xz
 cd ffmpeg-9.0.2
-./configure \\
-  --prefix="$HOME/opt/ffmpeg-9.0.2" \\
-  --disable-debug \\
-  --disable-doc \\
-  --disable-ffplay \\
-  --disable-network \\
-  --disable-autodetect \\
-  --disable-shared \\
-  --enable-static \\
+./configure \
+  --prefix="$HOME/opt/ffmpeg-9.0.2" \
+  --disable-debug \
+  --disable-doc \
+  --disable-ffplay \
+  --disable-network \
+  --disable-autodetect \
+  --disable-shared \
+  --enable-static \
   --enable-ffmpeg
 make -j"$(sysctl -n hw.ncpu)"
 make install
 ```
 
-SHA-256 `8c3850283eb25fa026482078a04051e0be17347b09ef81a0849bec15a96e002e` 是第三方 Fossies 对同一官方源码归档公布的校验值，不是 FFmpeg 官方发布页提供的 checksum；如客户要求强制验证发布者身份，应另外验证 FFmpeg 官方 `.asc` 签名。版本说明：[FFmpeg 9.0.2](https://www.ffmpeg.org/download.html)。
+SHA-256 `8c3850283eb25fa026482078a04051e0be17347b09ef81a0849bec15a96e002e` 是[第三方 Fossies 归档页](https://fossies.org/linux/misc/ffmpeg-9.0.2.tar.xz/)对同一官方源码归档公布的校验值，不是 FFmpeg 官方发布页提供的 checksum；如客户要求强制验证发布者身份，应另外验证 FFmpeg 官方 `.asc` 签名。版本说明：[FFmpeg 9.0.2](https://www.ffmpeg.org/download.html)。
 
 配置和验证：
 
