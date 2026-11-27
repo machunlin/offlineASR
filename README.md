@@ -15,7 +15,7 @@
 项目只负责自身应用构建、部署和运行。以下外部依赖由客户或技术支持工程师自行下载、安装和配置：
 
 - Java 11 Runtime。
-- sherpa-onnx 2.0.3 Native JAR 中的 JNI 与 ONNX Runtime Native。
+- sherpa-onnx 2.0.3 Native JAR（一个平台对应一个 JAR，内含 JNI 与 ONNX Runtime Native；无需另行下载 ONNX Runtime）。
 - SenseVoiceSmall INT8 `2025-09-09` 模型。
 - FFmpeg。
 - 其他系统运行库，例如 Windows Microsoft Visual C++ Redistributable。
@@ -25,8 +25,8 @@ sherpa-onnx 的技术边界必须区分：
 | 内容 | 交付方式 |
 |---|---|
 | sherpa-onnx JVM Java API/Wrapper | 随应用 Fat JAR |
-| `sherpa-onnx-jni` | 客户安装 Native Runtime |
-| ONNX Runtime Native | 客户安装 Native Runtime |
+| `sherpa-onnx-jni` | 随对应平台 Native JAR 提供，客户下载并解压 |
+| ONNX Runtime Native | 已包含在同一个 Native JAR 中，无需单独下载 |
 
 项目不自动下载上述外部依赖，不把它们复制进部署包，也不生成包含全部第三方资产的完整离线包。固定版本、官方地址、直接下载地址、SHA-256、安装步骤和许可状态见 [第三方组件与许可证清单](docs/08-第三方组件与许可证清单.md)。
 
