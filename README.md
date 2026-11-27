@@ -18,7 +18,7 @@
 
 | 平台 | 启动/构建入口 |
 |---|---|
-| macOS ARM64 | bash scripts/mac-start.sh |
+| macOS ARM64 | bash scripts/mac-start.sh，参考 [macOS 运行指南](docs/05-macOS运行指南.md) |
 | Linux x64 | bash scripts/linux-package.sh，然后按 Linux 部署指南部署 |
 | Windows x64 | scripts\\windows-package.bat，按 Windows 部署指南准备完整离线包 |
 
@@ -41,7 +41,7 @@
 | 读者 | 文档 | 用途 |
 |---|---|---|
 | 技术支持 / AI Agent | [AI Agent 部署入口](docs/AI_AGENT_DEPLOYMENT.md) | 一句话启动部署任务，自动识别平台并按指南执行 |
-| Windows 技术支持 | [Windows 部署手册](docs/03-Windows部署手册.md) | 离线部署、启动、验收和服务配置 |
+| Windows 技术支持 | [Windows 部署手册](docs/03-Windows部署手册.md) | 离线部署、启动、验收和服务配置 |\n| macOS ARM64 | [macOS 运行指南](docs/05-macOS运行指南.md) | Apple Silicon 本机运行和验证 |
 | Linux 技术支持 | [Linux 部署手册](docs/04-Linux部署手册.md) | Ubuntu x64 构建与部署 |
 | SDK 集成人员 | [JavaScript SDK 接入文档](docs/SDK接入文档.md) | API、事件、参数和集成示例 |
 | 现场支持 | [Windows 现场部署与排障](docs/Windows现场部署与排障手册.md) | 麦克风、设备选择、日志和故障定位 |

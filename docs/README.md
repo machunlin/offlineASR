@@ -7,7 +7,7 @@
 | 技术支持工程师 / AI Agent | [AI Agent 部署入口](AI_AGENT_DEPLOYMENT.md) |
 | Windows 部署 | [Windows 部署手册](03-Windows部署手册.md) |
 | Linux 部署 | [Linux 部署手册](04-Linux部署手册.md) |
-| Windows 现场排障 | [Windows 现场部署与排障](Windows现场部署与排障手册.md) |
+| macOS ARM64 本机运行 | [macOS 运行指南](05-macOS运行指南.md) |\n| Windows 现场排障 | [Windows 现场部署与排障](Windows现场部署与排障手册.md) |
 | 第三方 SDK 集成 | [JavaScript SDK 接入](SDK接入文档.md) |
 | 开发人员 | [开发协作规范](开发协作规范.md) |
 | 测试人员 | [测试计划与用例](测试计划与用例.md) |

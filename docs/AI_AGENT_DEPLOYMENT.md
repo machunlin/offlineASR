@@ -27,7 +27,7 @@
 |---|---|---|
 | Windows 10/11，x64 | Windows x64 | [Windows 部署手册](03-Windows部署手册.md) |
 | Linux，x86_64（当前指南以 Ubuntu 22.04 为基准） | Linux x64 | [Linux 部署手册](04-Linux部署手册.md) |
-| macOS，ARM64 | macOS ARM64 | 本机开发/验证环境；参考仓库启动脚本 scripts/mac-start.sh |
+| macOS，ARM64 | macOS ARM64 | [macOS 运行指南](05-macOS运行指南.md) |
 
 不支持的操作系统或 CPU 架构应停止自动部署并报告，不得套用其他平台的原生库。
 
