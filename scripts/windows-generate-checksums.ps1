@@ -28,5 +28,5 @@ foreach ($file in $files) {
 }
 
 Set-Content -LiteralPath $manifestPath -Value $lines -Encoding UTF8
-Write-Host "已生成完整部署包 SHA-256 清单：$manifestPath"
+Write-Host "已生成应用包 SHA-256 清单：$manifestPath"
 Write-Host "纳入文件数量：$($files.Count)（不含运行时 logs/、temp/）"

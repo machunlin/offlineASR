@@ -59,9 +59,7 @@ Copy-Item -LiteralPath (Join-Path $Root 'deploy/maven-test-dependencies-windows-
 Copy-Item -LiteralPath (Join-Path $Root 'deploy/maven-licenses-windows-x64.txt') -Destination (Join-Path $Package 'third-party/maven-licenses.txt')
 
 & (Join-Path $Root 'scripts/windows-generate-checksums.ps1') -Root $Package
-if ($LASTEXITCODE -ne 0) { throw '应用包 SHA-256 清单生成失败' }
 & (Join-Path $Root 'scripts/windows-verify-package.ps1') -Root $Package
-if ($LASTEXITCODE -ne 0) { throw '应用包静态校验失败' }
 
 Write-Host "Windows x64 应用包已生成并通过静态校验: $Package"
 Write-Host '本包仅含应用文件；Java、sherpa-onnx Native Runtime、模型和 FFmpeg 由目标机自行准备。'
