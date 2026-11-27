@@ -105,6 +105,7 @@
     function beginRecognition(message) {
         // 每次开始识别前清空上一次结果，避免旧内容造成误解。
         elements.result.textContent = '';
+        elements.result.hidden = true;
         elements.resultMeta.textContent = '';
         elements.resultLoading.hidden = false;
         setStatus(message);
@@ -112,6 +113,7 @@
 
     function endRecognition() {
         elements.resultLoading.hidden = true;
+        elements.result.hidden = false;
     }
 
     function renderResult(payload, filename) {
