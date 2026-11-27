@@ -20,7 +20,7 @@ jobs:
         with:
           node-version: "20"
       - name: 检查启动脚本语法
-        run: bash -n scripts/mac-start.sh scripts/verify-stage-three.sh scripts/download-linux-native.sh scripts/linux-package.sh scripts/linux-start.sh scripts/download-test-data.sh
+        run: bash -n scripts/mac-start.sh scripts/verify-stage-three.sh scripts/download-linux-native.sh scripts/linux-package.sh scripts/linux-start.sh scripts/linux-generate-checksums.sh scripts/linux-verify-package.sh scripts/download-test-data.sh
       - name: 构建 macOS ARM64 并运行测试
         run: mvn -B -Pmacos-arm64 -Dmaven.repo.local=.m2 clean test package
       - name: 验证浏览器 JavaScript 契约
@@ -48,14 +48,16 @@ jobs:
       - name: 安装 FFmpeg
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - name: 检查 Linux 脚本语法
-        run: bash -n scripts/linux-package.sh scripts/linux-start.sh scripts/download-linux-native.sh scripts/verify-stage-three.sh
+        run: bash -n scripts/linux-package.sh scripts/linux-start.sh scripts/linux-generate-checksums.sh scripts/linux-verify-package.sh scripts/download-linux-native.sh scripts/verify-stage-three.sh
       - name: 执行 Linux 部署包构建脚本（含 Java 测试）
         run: bash scripts/linux-package.sh
       - name: 验证 Linux 部署包和原生库隔离
         run: |
-          test -f deploy/linux-x64/app/offline-asr.jar
-          jar tf deploy/linux-x64/app/offline-asr.jar | grep -q 'BOOT-INF/lib/sherpa-onnx-native-lib-linux-x64-2.0.3.jar'
-          if jar tf deploy/linux-x64/app/offline-asr.jar | grep -Eq 'osx-aarch64|win-x64'; then
+          test -f dist/linux-x64/app/offline-asr.jar
+          test -f dist/linux-x64/config/application.yml
+          test -f dist/linux-x64/scripts/linux-generate-checksums.sh
+          jar tf dist/linux-x64/app/offline-asr.jar | grep -q 'BOOT-INF/lib/sherpa-onnx-native-lib-linux-x64-2.0.3.jar'
+          if jar tf dist/linux-x64/app/offline-asr.jar | grep -Eq 'osx-aarch64|win-x64'; then
             echo "Linux 包含其他平台原生库" >&2
             exit 1
           fi

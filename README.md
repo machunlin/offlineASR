@@ -19,12 +19,10 @@
 | 平台 | 启动/构建入口 |
 |---|---|
 | macOS ARM64 | bash scripts/mac-start.sh，参考 [macOS 运行指南](docs/05-macOS运行指南.md) |
-| Linux x64 | bash scripts/linux-package.sh，然后按 Linux 部署指南部署 |
-| Windows x64 | scripts\\windows-package.bat，按 Windows 部署指南准备完整离线包 |
+| Linux x64 | bash scripts/linux-package.sh，生成 dist/linux-x64/ |
+| Windows x64 | scripts\\windows-package.bat，生成 dist\\windows-x64\\ |
 
-4. 浏览器访问 http://127.0.0.1:8080，允许麦克风权限并进行识别。
-
-**客户现场部署请勿依赖本节的开发环境命令。** 技术支持工程师和 AI Agent 应直接阅读 [AI Agent 部署入口](docs/AI_AGENT_DEPLOYMENT.md)，再按平台执行正式部署指南。
+4. 客户现场部署请阅读 [AI Agent 部署入口](docs/AI_AGENT_DEPLOYMENT.md)，再按平台部署手册补齐经许可核验的运行资产、生成校验清单并完成验收。
 
 ## 功能
 

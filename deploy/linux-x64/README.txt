@@ -1,11 +1,27 @@
-Offline ASR - Linux x64
+OfflineASR - Linux x64 离线部署包
 
-1. 目标环境：Ubuntu 22.04 x86_64、Java 11、FFmpeg。
-2. 解压部署目录到 /opt/offline-asr。
-3. 将 SenseVoiceSmall INT8 的 model.int8.onnx 和 tokens.txt 放入 models/SenseVoiceSmall/。
-4. 确保 linux-start.sh 可执行：chmod +x linux-start.sh。
-5. 前台验收：./linux-start.sh。
-6. 健康检查：http://127.0.0.1:8080/api/asr/health。
-7. 默认只监听 127.0.0.1；如需远程浏览器访问，需单独评估 ASR_HOST、TLS、认证和防火墙，不要直接暴露无认证服务。
-8. 临时音频文件保存在 temp/，文件名 yyyyMMddHHmmss.扩展名，超过 4 小时清理，不递归删除子目录。
-9. 2 GB 内存主机必须先测量模型加载后空闲 RSS 和连续识别峰值，再决定 JAVA_OPTS；不要仅凭 -Xmx 判断进程总内存。
+目录说明：
+- app/：Spring Boot 应用
+- jdk/：可选的 Java 11 Runtime；正式离线交付时应放入经过许可核验的 Linux x64 Runtime
+- models/SenseVoiceSmall/：SenseVoiceSmall INT8 模型
+- ffmpeg/bin/：可选的 Linux x64 FFmpeg
+- config/：应用配置
+- logs/、temp/：运行日志和临时音频
+- scripts/：完整性清单生成和校验脚本
+
+构建机：
+1. 在 Linux x64 构建机运行 bash scripts/linux-package.sh。
+2. 将经许可核验的 Java 11 Runtime 放入 jdk/。
+3. 将 model.int8.onnx 和 tokens.txt 放入 models/SenseVoiceSmall/。
+4. 将 Linux x64 ffmpeg 可执行文件放入 ffmpeg/bin/ffmpeg，并赋予执行权限。
+5. 执行 scripts/linux-generate-checksums.sh，再执行 scripts/linux-verify-package.sh。
+6. 校验通过后，将整个目录压缩交付；不要在生成清单后再修改或替换任何文件。
+
+目标机：
+1. 解压到 /opt/offline-asr，确保部署用户对目录有读写权限。
+2. 执行 ./scripts/linux-verify-package.sh。
+3. 执行 ./linux-start.sh 前台启动并完成健康检查和真实音频识别。
+4. 需要 systemd 时，先按部署手册检查服务用户、路径和权限，再由授权人员安装模板。
+
+默认仅监听 127.0.0.1:8080。当前服务没有用户认证，不要直接暴露公网或不可信局域网。
+若未随包提供 jdk/ 或 ffmpeg/bin/，目标机必须预装 Java 11 或 FFmpeg；这不属于完整离线交付包。
