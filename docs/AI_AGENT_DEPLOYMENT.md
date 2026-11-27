@@ -87,7 +87,7 @@ java -version
 
 #### 3.1.2 sherpa-onnx Native Runtime
 
-固定版本：sherpa-onnx `2.0.3`。Windows x64、Linux x64、macOS ARM64 必须使用各自 Native JAR。该 JAR 同时包含 JNI 与 ONNX Runtime，解压时必须把两个库放到目录根层：
+固定版本：sherpa-onnx `2.0.3`。Windows x64、Linux x64、macOS ARM64 必须使用各自 Native JAR。每个平台只需下载一个 Native JAR；该 JAR 已同时包含 JNI 与 ONNX Runtime Native，**不需要再单独下载 ONNX Runtime**。解压时必须把两个库放到目录根层：
 
 ```text
 <部署根目录>/external/sherpa-onnx-native/
@@ -139,7 +139,7 @@ Test-Path models\SenseVoiceSmall\tokens.txt
 ffmpeg -version
 ```
 
-成功判定：退出码 0 且输出版本信息。Windows/Linux 应使用清单中的固定 LGPL-only 构建；macOS 可使用 Homebrew 或源码构建。失败时检查 `PATH`、`ASR_FFMPEG` 绝对路径和执行权限。
+成功判定：退出码 0 且输出版本信息。Windows/Linux 使用第三方组件清单中的固定 LGPL-only 构建；macOS ARM64 从 FFmpeg 官方源码 `9.0.2` 编译安装，不以 Homebrew 当前滚动版本作为固定交付版本。完整命令、校验值和配置方法见 `docs/05-macOS运行指南.md` 第 2.4 节。失败时检查 `PATH`、`ASR_FFMPEG` 绝对路径和执行权限。
 
 ### 3.2 第二阶段：部署 OfflineASR
 
