@@ -27,7 +27,11 @@
    ~~~
    成功判定：输出包含 `version "11`。
 
+说明：Windows x64 暂使用 `11.0.33+10`，Linux/macOS 使用 `11.0.33.1+1`。Temurin 官方 `11.0.33.1+1` 发布记录截至 2026-11-27 尚无 Windows x64 发行资产，因此不应将 Windows 下载地址改成该版本。详见 [第三方组件清单](08-第三方组件与许可证清单.md#21-已核验直接下载地址)。
+
 ### 2.2 sherpa-onnx Native Runtime
+
+此处下载的单个 Native JAR 已同时包含 `sherpa-onnx-jni.dll` 和 `onnxruntime.dll`；不需要另外下载 ONNX Runtime。
 
 1. 下载 sherpa-onnx 2.0.3 Windows x64 Native JAR：
    https://github.com/k2-fsa/sherpa-onnx/releases/download/v2.0.3/sherpa-onnx-native-lib-win-x64-2.0.3.jar
