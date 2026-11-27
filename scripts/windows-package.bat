@@ -1,11 +1,17 @@
 @echo off
 setlocal EnableExtensions
 set "ROOT=%~dp0.."
-set "MAVEN=%MAVEN_HOME%\bin\mvn.cmd"
-if "%MAVEN_HOME%"=="" set "MAVEN=mvn.cmd"
+set "MAVEN_CMD="
+if defined MAVEN_HOME if exist "%MAVEN_HOME%\bin\mvn.cmd" set "MAVEN_CMD=%MAVEN_HOME%\bin\mvn.cmd"
+if not defined MAVEN_CMD for /f "delims=" %%M in ('where mvn.cmd 2^>nul') do if not defined MAVEN_CMD set "MAVEN_CMD=%%M"
+if not defined MAVEN_CMD (
+    echo [ERROR] 未找到 mvn.cmd；请安装 Maven 或设置 MAVEN_HOME。
+    exit /b 1
+)
 
+echo [INFO] Maven: %MAVEN_CMD%
 pushd "%ROOT%"
-call "%MAVEN%" -B -Dmaven.repo.local=.m2 clean test package
+call "%MAVEN_CMD%" -B -Dmaven.repo.local=.m2 clean test package
 if errorlevel 1 (
     echo [ERROR] Maven 构建失败。
     popd
