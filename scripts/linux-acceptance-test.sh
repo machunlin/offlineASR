@@ -7,9 +7,17 @@ set -uo pipefail
 ROOT="${ASR_DEPLOY_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 BASE_URL="${ASR_BASE_URL:-http://127.0.0.1:8080}"
 AUDIO_FILE="${1:-}"
+if [[ ! -d "${ROOT}" ]]; then
+  echo "[失败] 部署目录不存在：${ROOT}" >&2
+  exit 1
+fi
+
 TIMESTAMP="$(date '+%Y%m%d%H%M%S')"
 LOG_DIR="${ROOT}/logs"
-mkdir -p "${LOG_DIR}"
+if ! mkdir -p "${LOG_DIR}"; then
+  echo "[失败] 无法创建日志目录：${LOG_DIR}" >&2
+  exit 1
+fi
 LOG_FILE="${LOG_DIR}/acceptance-${TIMESTAMP}.log"
 PASS_COUNT=0
 FAIL_COUNT=0
