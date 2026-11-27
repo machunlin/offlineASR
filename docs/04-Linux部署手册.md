@@ -30,6 +30,8 @@
 
 ### 2.2 sherpa-onnx Native Runtime
 
+此处下载的单个 Linux x64 Native JAR 已同时包含 `libsherpa-onnx-jni.so` 和 `libonnxruntime.so`；不需要另外下载 ONNX Runtime。
+
 1. 下载：
    https://github.com/k2-fsa/sherpa-onnx/releases/download/v2.0.3/sherpa-onnx-native-lib-linux-x64-2.0.3.jar
 2. SHA-256：`42330fbcfe4f771386545397ebf8a8dd2176ff913a254331226c01ad87982e17`
