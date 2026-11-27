@@ -8,10 +8,12 @@ if not exist "%ROOT%\lib\sherpa-onnx-native-lib-win-x64-2.0.3.jar" (
   exit /b 1
 )
 pushd "%ROOT%"
-call "%MAVEN%" -Pwindows-x64 -Dmaven.repo.local=.m2 clean test package
-if errorlevel 1 (
-  set "BUILD_ERROR=%ERRORLEVEL%"
-  goto :build_failed
+if not "%ASR_SKIP_MAVEN_BUILD%"=="1" (
+  call "%MAVEN%" -Pwindows-x64 -Dmaven.repo.local=.m2 clean test package
+  if errorlevel 1 (
+    set "BUILD_ERROR=%ERRORLEVEL%"
+    goto :build_failed
+  )
 )
 
 set "PACKAGE=dist\windows-x64"

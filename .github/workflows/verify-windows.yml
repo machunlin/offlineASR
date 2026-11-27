@@ -100,5 +100,23 @@ jobs:
           }
           $otherEntries = $entries | Where-Object { $_ -match "osx-aarch64|linux-x64" }
           if ($otherEntries) { throw "Windows package contains another platform native library" }
+      - name: Assemble Windows x64 deployment package
+        shell: cmd
+        env:
+          ASR_SKIP_MAVEN_BUILD: "1"
+        run: scripts\\windows-package.bat
+      - name: Verify Windows deployment package layout
+        shell: pwsh
+        run: |
+          $required = @(
+            "dist/windows-x64/app/offline-asr.jar",
+            "dist/windows-x64/config/application.yml",
+            "dist/windows-x64/scripts/windows-start.bat",
+            "dist/windows-x64/scripts/windows-generate-checksums.ps1",
+            "dist/windows-x64/scripts/windows-verify-package.ps1"
+          )
+          foreach ($path in $required) {
+            if (-not (Test-Path $path -PathType Leaf)) { throw "Missing package file: $path" }
+          }
       - name: Run browser JavaScript contract tests
         run: node scripts/verify-js-contract.mjs
