@@ -1,93 +1,115 @@
 # Linux x64 部署手册
 
-适用目标：Ubuntu 22.04 LTS、x86_64、Java 11。当前不承诺 Linux ARM64。
+适用目标：Ubuntu 22.04 LTS x86_64。OfflineASR 应用包只包含应用文件，外部运行依赖由客户或技术支持工程师准备。
 
-## 1. 构建部署包
+## 1. 应用包
 
-在可联网的 Linux x64 构建机上执行：
+应用包包含 `app/offline-asr.jar`、`config/application.yml`、启动脚本、校验脚本、`LICENSE`、`THIRD_PARTY_NOTICES.md`、第三方组件清单、Maven 依赖清单、SBOM、许可材料和 `checksums.sha256`。
 
-~~~bash
-bash scripts/linux-package.sh
-~~~
+应用包不包含 Java Runtime、sherpa-onnx Native Runtime、ONNX Runtime、SenseVoiceSmall 模型或 FFmpeg。
 
-脚本下载并校验 sherpa-onnx v2.0.3 官方 Linux x64 原生 JAR，然后执行 Maven clean test package，生成 dist/linux-x64/。deploy/linux-x64/ 仅保存配置和发布说明模板，不是最终输出目录。
+## 2. 第一阶段：准备运行环境
 
-## 2. 补齐离线运行资产
+### 2.1 Java 11
 
-将经许可核验的 Java 11 Linux x64 Runtime 解压到 dist/linux-x64/jdk/；将模型文件放入：
+推荐 Eclipse Temurin 11 JRE x64，版本 `11.0.33.1+1`。
 
-- dist/linux-x64/models/SenseVoiceSmall/model.int8.onnx
-- dist/linux-x64/models/SenseVoiceSmall/tokens.txt
+1. 直接下载：
+   https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.33.1%2B1/OpenJDK11U-jre_x64_linux_hotspot_11.0.33.1_1.tar.gz
+2. SHA-256：`e32167b352a56497b0ac401409321c00948e0a4131d9d1f92abf0f901e7bf62d`
+3. 校验：
+   ~~~bash
+   sha256sum OpenJDK11U-jre_x64_linux_hotspot_11.0.33.1_1.tar.gz
+   ~~~
+4. 解压到固定目录并设置 `JAVA_HOME`：
+   ~~~bash
+   export JAVA_HOME=/opt/temurin-java-11
+   export PATH="$JAVA_HOME/bin:$PATH"
+   ~~~
+5. 验证：`java -version`。成功判定：输出包含 `version "11`。
 
-将 Linux x64 FFmpeg 可执行文件放入 dist/linux-x64/ffmpeg/bin/ffmpeg，并赋予执行权限：
+### 2.2 sherpa-onnx Native Runtime
 
-~~~bash
-chmod +x dist/linux-x64/ffmpeg/bin/ffmpeg
-~~~
+1. 下载：
+   https://github.com/k2-fsa/sherpa-onnx/releases/download/v2.0.3/sherpa-onnx-native-lib-linux-x64-2.0.3.jar
+2. SHA-256：`42330fbcfe4f771386545397ebf8a8dd2176ff913a254331226c01ad87982e17`
+3. 校验：
+   ~~~bash
+   sha256sum sherpa-onnx-native-lib-linux-x64-2.0.3.jar
+   ~~~
+4. 将两个库扁平解压到目录根层：
+   ~~~bash
+   mkdir -p /opt/offline-asr/external/sherpa-onnx-native
+   unzip -j sherpa-onnx-native-lib-linux-x64-2.0.3.jar \
+     'sherpa-onnx/native/linux-x64/*' \
+     -d /opt/offline-asr/external/sherpa-onnx-native
+   ~~~
+5. 确认目录根层同时存在 `libonnxruntime.so` 和 `libsherpa-onnx-jni.so`。
+6. 可用 `ASR_SHERPA_NATIVE_PATH` 指定其他绝对路径。
 
-若不随包提供 Java 或 FFmpeg，必须明确客户机需要预装对应依赖，不能将其描述为完整离线包。
+### 2.3 SenseVoiceSmall INT8
 
-## 3. 生成并验证发布清单
+1. 下载：
+   https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-int8-2025-09-09.tar.bz2
+2. SHA-256：`7305f7905bfcf77fa0b39388a313f3da35c68d971661a65475b56fb2162c8e63`
+3. 校验并解压：
+   ~~~bash
+   sha256sum sherpa-onnx-sense-voice-zh-en-ja-ko-yue-int8-2025-09-09.tar.bz2
+   tar -xjf sherpa-onnx-sense-voice-zh-en-ja-ko-yue-int8-2025-09-09.tar.bz2
+   mkdir -p /opt/offline-asr/models/SenseVoiceSmall
+   cp sherpa-onnx-sense-voice-zh-en-ja-ko-yue-int8-2025-09-09/{model.int8.onnx,tokens.txt} \
+      /opt/offline-asr/models/SenseVoiceSmall/
+   ~~~
+4. 也可设置 `ASR_MODEL_DIR` 指向其他目录。
 
-~~~bash
-cd dist/linux-x64
-./scripts/linux-generate-checksums.sh
-./scripts/linux-verify-package.sh
-~~~
+### 2.4 FFmpeg
 
-校验脚本会检查必要文件、清单中的 SHA-256、重复路径、非法路径及未纳入清单的文件。校验通过后回到仓库根目录，执行以下命令生成交付压缩包：
+1. 固定 LGPL-only 构建下载：
+   https://github.com/FFmpeg-Builds/FFmpeg-Builds/releases/download/autobuild-2026-11-26-12-56/ffmpeg-n9.0.2-982-g836df4e858-linux64-lgpl-9.0.tar.xz
+2. SHA-256：`8a30403651be3fdcba2bbbd2cc036093517daa77cf6d7adda835a61569cf5afc`
+3. 解压后将包含 `ffmpeg` 的 `bin` 目录加入 `PATH`，或设置 `ASR_FFMPEG` 为绝对路径。
+4. 验证：`ffmpeg -version`
 
-~~~bash
-cd ../..
-tar -czf dist/OfflineASR-linux-x64.tar.gz -C dist linux-x64
-~~~
+## 3. 第二阶段：部署 OfflineASR
 
-生成清单后不得修改或替换任何文件。
+1. 解压应用包到 `/opt/offline-asr`，确保部署用户对目录有读写权限。
+2. 执行：
+   ~~~bash
+   ./scripts/linux-verify-package.sh
+   ~~~
+3. 确认环境变量：
+   ~~~bash
+   export JAVA_HOME=/opt/temurin-java-11
+   export ASR_SHERPA_NATIVE_PATH=/opt/offline-asr/external/sherpa-onnx-native
+   export ASR_MODEL_DIR=/opt/offline-asr/models/SenseVoiceSmall
+   export ASR_FFMPEG=/path/to/ffmpeg
+   ~~~
+4. 前台启动：
+   ~~~bash
+   ./linux-start.sh
+   ~~~
+5. 健康检查：
+   ~~~bash
+   curl --fail http://127.0.0.1:8080/api/asr/health
+   ~~~
+   成功判定：`applicationStatus=READY`、`modelLoaded=true`、`ffmpegAvailable=true`。
 
-## 4. 部署与启动
+## 4. 第三阶段：验收
 
-将目录整体复制到目标机，例如：
+1. 使用已授权真实音频调用 `POST /api/asr`，确认非空识别结果。
+2. 在本机 Chrome 验证麦克风权限、设备选择、录音和上传识别。
+3. 断网后重启服务，重复真实音频识别。
+4. 记录空闲 RSS、连续识别峰值 RSS 和可用内存。
+5. `offline-asr.service` 是模板；安装前必须核对其中的 `JAVA_HOME`、`ASR_MODEL_DIR`、`ASR_SHERPA_NATIVE_PATH`、服务用户和目录权限。安装系统服务、创建用户或修改防火墙必须先获得客户授权。
 
-~~~bash
-sudo mkdir -p /opt/offline-asr
-sudo cp -a dist/linux-x64/. /opt/offline-asr/
-~~~
+## 5. 常见故障
 
-由客户授权管理员确认部署用户和目录权限。随后在目标机执行：
+| 现象 | 检查 | 处理 |
+|---|---|---|
+| Java 不是 11 | `java -version`、`JAVA_HOME`、`PATH` | 安装/切换 Java 11 |
+| Native Runtime 缺失 | `ASR_SHERPA_NATIVE_PATH`、两个 `.so` 文件 | 重新下载/解压 linux-x64 Native JAR |
+| 模型缺失 | `ASR_MODEL_DIR`、`model.int8.onnx`、`tokens.txt` | 重新下载并解压模型包 |
+| FFmpeg 不可用 | `ffmpeg -version`、`ASR_FFMPEG`、`PATH` | 安装 FFmpeg 或修正路径 |
+| JNI 加载失败 | Native 文件架构、glibc、权限 | 使用 linux-x64 文件并检查目标架构 |
 
-~~~bash
-cd /opt/offline-asr
-./scripts/linux-verify-package.sh
-./linux-start.sh
-~~~
-
-启动脚本优先使用包内 jdk/bin/java 和 ffmpeg/bin/ffmpeg；不存在时才使用 JAVA_HOME、PATH 中的系统依赖。模型和临时文件路径使用部署目录绝对路径。
-
-## 5. 验收
-
-另开终端执行：
-
-~~~bash
-curl --fail http://127.0.0.1:8080/api/asr/health
-~~~
-
-确认 applicationStatus=READY、modelLoaded=true、ffmpegAvailable=true。随后使用已授权的真实音频执行 POST /api/asr，并在本机 Chrome 验证麦克风录音和文件上传识别。
-
-健康检查成功不代表 JNI 已完成真实推理。断网验收应断开网络后重启服务，再重复真实音频识别。
-
-## 6. 内存验收
-
-~~~bash
-free -h
-ps -eo pid,rss,vsz,%mem,comm,args | grep '[j]ava'
-~~~
-
-至少记录模型加载完成后的空闲 RSS、连续识别峰值 RSS 和系统可用内存。2 GB 内存主机不应仅根据 JVM -Xmx 判断进程总内存。
-
-## 7. systemd
-
-offline-asr.service 是模板。安装前必须检查服务用户、工作目录、Java 路径和权限。未经客户授权，不得创建系统用户、写入 /etc/systemd/system/、启用服务或修改防火墙。
-
-## 8. 安全边界
-
-服务默认绑定 127.0.0.1:8080，当前没有用户认证，不应直接绑定公网或不可信局域网地址。
+默认监听 `127.0.0.1:8080`，服务无用户认证，不得直接暴露公网或不可信局域网。

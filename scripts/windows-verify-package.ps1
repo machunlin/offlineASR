@@ -7,35 +7,52 @@ $ErrorActionPreference = 'Stop'
 $Root = (Resolve-Path -LiteralPath $Root).Path
 $requiredFiles = @(
     'app/offline-asr.jar',
-    'jdk/bin/java.exe',
-    'models/SenseVoiceSmall/model.int8.onnx',
-    'models/SenseVoiceSmall/tokens.txt',
-    'ffmpeg/bin/ffmpeg.exe',
     'config/application.yml',
     'scripts/windows-start.bat',
-    'scripts/windows-status.bat'
+    'scripts/windows-diagnose.bat',
+    'scripts/windows-status.bat',
+    'scripts/offline-asr.xml',
+    'LICENSE',
+    'THIRD_PARTY_NOTICES.md',
+    'docs/08-第三方组件与许可证清单.md',
+    'licenses/README.md',
+    'licenses/sherpa-onnx-LICENSE',
+    'licenses/ONNX-Runtime/LICENSE',
+    'licenses/SenseVoiceSmall/MODEL-PACKAGE-README.md',
+    'third-party/sbom-windows-x64.cdx.json',
+    'third-party/maven-runtime-dependencies.txt',
+    'third-party/maven-test-dependencies.txt',
+    'third-party/maven-licenses.txt'
 )
 
 foreach ($relativePath in $requiredFiles) {
-    $path = Join-Path $Root $relativePath
-    if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
-        throw "缺少部署资产: $relativePath"
+    if (-not (Test-Path -LiteralPath (Join-Path $Root $relativePath) -PathType Leaf)) {
+        throw "缺少应用包文件: $relativePath"
     }
 }
 
-$java = Join-Path $Root 'jdk/bin/java.exe'
-$ffmpeg = Join-Path $Root 'ffmpeg/bin/ffmpeg.exe'
-& $java -version
-if ($LASTEXITCODE -ne 0) { throw 'Java Runtime 无法执行' }
-$javaProperties = (& $java -XshowSettings:properties -version 2>&1 | Out-String)
-if ($javaProperties -notmatch 'java.specification.version\s*=\s*11') {
-    throw '部署包必须使用 Java 11 Runtime'
+foreach ($forbidden in @('jdk', 'ffmpeg', 'models', 'external/sherpa-onnx-native')) {
+    if (Test-Path -LiteralPath (Join-Path $Root $forbidden)) {
+        throw "应用包不应包含外部依赖目录: $forbidden"
+    }
 }
-if ($javaProperties -notmatch 'os.arch\s*=\s*(amd64|x86_64)') {
-    throw '部署包必须使用 64 位 x64 Java Runtime'
+
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+$jarPath = Join-Path $Root 'app/offline-asr.jar'
+$jar = [System.IO.Compression.ZipFile]::OpenRead($jarPath)
+try {
+    $entries = $jar.Entries | ForEach-Object { $_.FullName }
+    if (-not ($entries -contains 'BOOT-INF/lib/sherpa-onnx-jvm-2.0.3.jar')) {
+        throw '应用 JAR 缺少 sherpa-onnx Java Wrapper'
+    }
+    $foreignJars = $entries | Where-Object { $_ -match 'sherpa-onnx-native-lib-' }
+    if ($foreignJars) {
+        throw "应用 JAR 不应包含外部 Native Runtime: $($foreignJars -join ', ')"
+    }
 }
-& $ffmpeg -version
-if ($LASTEXITCODE -ne 0) { throw 'FFmpeg 无法执行' }
+finally {
+    $jar.Dispose()
+}
 
 $manifestPath = Join-Path $Root 'checksums.sha256'
 if (-not (Test-Path -LiteralPath $manifestPath -PathType Leaf)) {
@@ -72,7 +89,7 @@ foreach ($line in Get-Content -LiteralPath $manifestPath) {
     $verifiedCount++
 }
 
-if ($verifiedCount -lt 5) {
+if ($verifiedCount -lt 8) {
     throw "哈希清单资产数量不足，实际 $verifiedCount 项"
 }
 
@@ -91,5 +108,6 @@ foreach ($file in $actualFiles) {
     }
 }
 
-Write-Host "Windows 离线部署包静态自检通过，已验证 $verifiedCount 个文件。"
-Write-Host '注意：该检查不替代 Windows x64 JNI、Chrome 麦克风及断网实机测试。'
+Write-Host "Windows 应用包静态自检通过，已验证 $verifiedCount 个文件。"
+Write-Host '本包不含 Java Runtime、sherpa-onnx Native Runtime、模型或 FFmpeg。'
+Write-Host '外部依赖验收需在目标机按 docs/08-第三方组件与许可证清单.md 完成。'

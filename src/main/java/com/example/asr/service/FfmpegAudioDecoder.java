@@ -71,7 +71,7 @@ public class FfmpegAudioDecoder {
             log.error("Unable to start FFmpeg decoder executable={} inputPath={}",
                     properties.getFfmpegCommand(), inputPath.toAbsolutePath(), exception);
             throw new ApiException(HttpStatus.SERVICE_UNAVAILABLE, "SERVICE_NOT_READY",
-                    "FFmpeg 不可用，请检查部署包");
+                    "FFmpeg 不可用；请安装 FFmpeg 并通过 ASR_FFMPEG 或 PATH 配置");
         }
     }
 

@@ -16,6 +16,15 @@ logs/
 /src/test/resources/test-data/.download-cache/
 /.env
 
-# Linux x64 sherpa-onnx 原生 JAR 由构建脚本下载并校验，不提交二进制文件。
-/lib/sherpa-onnx-native-lib-linux-x64-2.0.3.jar
-/lib/linux-x64-sha256.txt
+# 外部依赖目录与第三方 Native 二进制不进入仓库。
+/external/
+/lib/sherpa-onnx-native-lib-*.jar
+/lib/linux-*-sha256.txt
+/lib/maven-repository/
+/deploy/sbom-*.cdx.json
+/deploy/maven-runtime-dependencies-*.txt
+/deploy/maven-test-dependencies-*.txt
+/deploy/maven-licenses-*.txt
+
+# 避免把生成的应用 JAR 误当作源码提交。
+/deploy/*/app/*.jar

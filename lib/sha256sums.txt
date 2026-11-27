@@ -1,3 +1,1 @@
 ad69b6a54462ba3671782617b11d35975c8d6b7c84ae11765e3a06dd0c56c0e5  sherpa-onnx-jvm-2.0.3.jar
-9c85930bcf081eb285a324f0f97eec63054a2a6ba7baf47408b83683add2a675  sherpa-onnx-native-lib-osx-aarch64-2.0.3.jar
-26a9072f4a47be3a73bfbbba5f25e6e8b84b24734be651de2d480ae753ae6508  sherpa-onnx-native-lib-win-x64-2.0.3.jar

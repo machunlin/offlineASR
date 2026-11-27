@@ -1,17 +1,38 @@
 @echo off
 setlocal EnableExtensions
 set "ROOT=%~dp0.."
-set "JAVA_EXE=%ROOT%\jdk\bin\java.exe"
-set "FFMPEG_EXE=%ROOT%\ffmpeg\bin\ffmpeg.exe"
 
 echo ===== Operating System =====
 ver
 echo.
 echo ===== Java Runtime =====
-if exist "%JAVA_EXE%" ("%JAVA_EXE%" -version) else (echo [ERROR] Java Runtime missing)
+if defined JAVA_HOME if exist "%JAVA_HOME%\bin\java.exe" (
+    "%JAVA_HOME%\bin\java.exe" -version
+) else (
+    where java.exe
+    java.exe -version
+)
+echo.
+echo ===== sherpa-onnx Native Runtime =====
+if defined ASR_SHERPA_NATIVE_PATH (
+    set "NATIVE_PATH=%ASR_SHERPA_NATIVE_PATH%"
+) else (
+    set "NATIVE_PATH=%ROOT%\external\sherpa-onnx-native"
+)
+if exist "%NATIVE_PATH%\onnxruntime.dll" (dir "%NATIVE_PATH%\onnxruntime.dll") else echo [WARN] onnxruntime.dll not found in %NATIVE_PATH%
+if exist "%NATIVE_PATH%\sherpa-onnx-jni.dll" (dir "%NATIVE_PATH%\sherpa-onnx-jni.dll") else echo [WARN] sherpa-onnx-jni.dll not found in %NATIVE_PATH%
+echo.
+echo ===== Model =====
+if defined ASR_MODEL_DIR (set "MODEL_DIR=%ASR_MODEL_DIR%") else set "MODEL_DIR=%ROOT%\models\SenseVoiceSmall"
+if exist "%MODEL_DIR%\model.int8.onnx" (dir "%MODEL_DIR%\model.int8.onnx") else echo [WARN] model.int8.onnx not found in %MODEL_DIR%
+if exist "%MODEL_DIR%\tokens.txt" (dir "%MODEL_DIR%\tokens.txt") else echo [WARN] tokens.txt not found in %MODEL_DIR%
 echo.
 echo ===== FFmpeg =====
-if exist "%FFMPEG_EXE%" ("%FFMPEG_EXE%" -version) else (echo [ERROR] FFmpeg missing)
+if defined ASR_FFMPEG (
+    "%ASR_FFMPEG%" -version
+) else (
+    ffmpeg.exe -version
+)
 echo.
 echo ===== Port 8080 =====
 netstat -ano | findstr ":8080"

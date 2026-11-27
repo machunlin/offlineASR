@@ -58,13 +58,23 @@ public class SherpaOnnxAsrEngine implements AsrEngine {
 
     /** 模型只在 Spring 启动时创建一次；每个请求仅创建轻量 stream。 */
     private void initializeRecognizer(AsrProperties properties) {
+        if (!validateExternalNativeRuntime()) {
+            return;
+        }
+
         Path modelDirectory = Path.of(properties.getModelDirectory()).toAbsolutePath().normalize();
         Path modelPath = modelDirectory.resolve(MODEL_FILENAME);
         Path tokensPath = modelDirectory.resolve(TOKENS_FILENAME);
 
-        if (!Files.isRegularFile(modelPath) || !Files.isRegularFile(tokensPath)) {
-            unavailableReason = "模型文件缺失";
-            log.error("SenseVoice model files are missing; modelDirectory={}", modelDirectory);
+        if (!Files.isRegularFile(modelPath)) {
+            unavailableReason = "缺少 model.int8.onnx；请按 docs/08-第三方组件与许可证清单.md 下载 "
+                    + "SenseVoiceSmall INT8 2025-09-09 并设置 ASR_MODEL_DIR";
+            log.error("SenseVoice model file is missing; modelDirectory={}", modelDirectory);
+            return;
+        }
+        if (!Files.isRegularFile(tokensPath)) {
+            unavailableReason = "缺少 tokens.txt；请解压 SenseVoiceSmall INT8 模型包并检查 ASR_MODEL_DIR";
+            log.error("SenseVoice tokens file is missing; modelDirectory={}", modelDirectory);
             return;
         }
 
@@ -87,10 +97,34 @@ public class SherpaOnnxAsrEngine implements AsrEngine {
                     modelDirectory, properties.getThreads());
         } catch (RuntimeException | LinkageError exception) {
             // JNI 加载失败通常是 LinkageError，不是 RuntimeException。
-            unavailableReason = "模型或原生运行库初始化失败";
+            unavailableReason = "sherpa-onnx Native Runtime 或模型初始化失败；"
+                    + "请检查 ASR_SHERPA_NATIVE_PATH、文件架构与模型文件";
             log.error("Unable to initialize sherpa-onnx recognizer; modelDirectory={} errorType={}",
                     modelDirectory, exception.getClass().getName(), exception);
         }
+    }
+
+    private boolean validateExternalNativeRuntime() {
+        String configuredPath = System.getProperty("sherpa_onnx.native.path");
+        if (configuredPath == null || configuredPath.isBlank()) {
+            // 开发环境可以由外部 classpath 提供 Native JAR；应用包不含 Native Runtime。
+            return true;
+        }
+
+        Path nativeDirectory = Path.of(configuredPath).toAbsolutePath().normalize();
+        if (!Files.isDirectory(nativeDirectory)) {
+            unavailableReason = "ASR_SHERPA_NATIVE_PATH 不是目录：" + nativeDirectory;
+            return false;
+        }
+
+        Path onnxRuntime = nativeDirectory.resolve(System.mapLibraryName("onnxruntime"));
+        Path sherpaJni = nativeDirectory.resolve(System.mapLibraryName("sherpa-onnx-jni"));
+        if (!Files.isRegularFile(onnxRuntime) || !Files.isRegularFile(sherpaJni)) {
+            unavailableReason = "Native Runtime 文件缺失；目录必须同时包含 "
+                    + onnxRuntime.getFileName() + " 和 " + sherpaJni.getFileName();
+            return false;
+        }
+        return true;
     }
 
     @Override

@@ -1,67 +1,118 @@
 # Windows x64 部署手册
 
-面向技术支持工程师。目标场景为应用和 Chrome 浏览器运行在同一台 Windows x64 主机。
+适用目标：Windows 10/11 x64。OfflineASR 应用包只包含应用文件，外部运行依赖由客户或技术支持工程师准备。
 
-## 1. 标准部署包
+## 1. 应用包
 
-部署包应包含 app/offline-asr.jar、jdk/bin/java.exe、模型文件、ffmpeg/bin/ffmpeg.exe、config/application.yml、scripts/ 和 checksums.sha256。
+应用包包含 `app/offline-asr.jar`、`config/application.yml`、启动/状态/服务/卸载脚本、`LICENSE`、`THIRD_PARTY_NOTICES.md`、第三方组件清单、Maven 依赖清单、SBOM、许可材料和 `checksums.sha256`。
 
-Java Runtime、模型、FFmpeg 和 VC++ Runtime 的来源及再分发许可必须由发布人员核验。不得从来源不明的网站下载或替换。
+应用包不包含 Java Runtime、sherpa-onnx Native Runtime、ONNX Runtime、SenseVoiceSmall 模型、FFmpeg 或 Microsoft Visual C++ Redistributable。
 
-## 2. 构建应用包
+## 2. 第一阶段：准备运行环境
 
-在 Windows x64 构建机准备 Java 11、Maven，并将官方 sherpa-onnx v2.0.3 Windows x64 原生 JAR 放入项目 lib/，完成 SHA-256 校验后执行：
+### 2.1 Java 11
 
-~~~bat
-scripts\windows-package.bat
-~~~
+1. 下载 Temurin 11 JRE x64，推荐 `11.0.33+10`。
+2. 官方 Release：https://adoptium.net/temurin/releases/?version=11
+3. 直接 ZIP：https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.33%2B10/OpenJDK11U-jre_x64_windows_hotspot_11.0.33_10.zip
+4. SHA-256：`d07c70035f7462924cd385912d76d50622baa17b15e5260df8facabcf2fff998`
+5. 校验命令：
+   ~~~powershell
+   Get-FileHash OpenJDK11U-jre_x64_windows_hotspot_11.0.33_10.zip -Algorithm SHA256
+   ~~~
+6. 解压后设置 `JAVA_HOME=<解压目录>`，并将 `%JAVA_HOME%\bin` 加入 `PATH`。
+7. 验证：
+   ~~~powershell
+   "%JAVA_HOME%\bin\java.exe" -version
+   ~~~
+   成功判定：输出包含 `version "11`。
 
-输出目录为 dist\windows-x64\。deploy\windows-x64\ 仅保存模板文件。
+### 2.2 sherpa-onnx Native Runtime
 
-## 3. 补齐离线运行资产
+1. 下载 sherpa-onnx 2.0.3 Windows x64 Native JAR：
+   https://github.com/k2-fsa/sherpa-onnx/releases/download/v2.0.3/sherpa-onnx-native-lib-win-x64-2.0.3.jar
+2. SHA-256：`26a9072f4a47be3a73bfbbba5f25e6e8b84b24734be651de2d480ae753ae6508`
+3. 校验：
+   ~~~powershell
+   Get-FileHash sherpa-onnx-native-lib-win-x64-2.0.3.jar -Algorithm SHA256
+   ~~~
+4. 将两个库扁平解压到应用目录下的 `external\sherpa-onnx-native\`：
+   ~~~powershell
+   New-Item -ItemType Directory -Force external\sherpa-onnx-native | Out-Null
+   tar -xf sherpa-onnx-native-lib-win-x64-2.0.3.jar `
+     -C external\sherpa-onnx-native --strip-components=3 `
+     sherpa-onnx/native/win-x64/onnxruntime.dll `
+     sherpa-onnx/native/win-x64/sherpa-onnx-jni.dll
+   ~~~
+5. 解压后目录根层必须同时存在：
+   - `onnxruntime.dll`
+   - `sherpa-onnx-jni.dll`
+6. 可用 `ASR_SHERPA_NATIVE_PATH` 指定其他绝对路径。
+7. 确认目标机已安装 Microsoft Visual C++ Redistributable x64；项目不随包分发该运行库。
 
-将经许可核验的 Java 11 x64 Runtime 放入 dist\windows-x64\jdk\；将模型放入 dist\windows-x64\models\SenseVoiceSmall\；将 Windows x64 FFmpeg 放入 dist\windows-x64\ffmpeg\bin\ffmpeg.exe。
+### 2.3 SenseVoiceSmall INT8
 
-确认目标机所需 Microsoft Visual C++ Redistributable x64 已安装。若计划随包分发，必须先核对其再分发许可。
+1. 下载：
+   https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-int8-2025-09-09.tar.bz2
+2. SHA-256：`7305f7905bfcf77fa0b39388a313f3da35c68d971661a65475b56fb2162c8e63`
+3. 解压后把 `model.int8.onnx` 和 `tokens.txt` 放入：
+   ~~~text
+   C:\offline-asr\models\SenseVoiceSmall
+   ~~~
+4. 也可设置 `ASR_MODEL_DIR` 指向其他目录。
+5. 校验：
+   ~~~powershell
+   Get-FileHash models\SenseVoiceSmall\model.int8.onnx -Algorithm SHA256
+   ~~~
 
-## 4. 生成并验证完整性清单
+### 2.4 FFmpeg
 
-在 Windows PowerShell 中执行：
+1. 下载固定 LGPL-only 构建：
+   https://github.com/FFmpeg-Builds/FFmpeg-Builds/releases/download/autobuild-2026-11-26-12-56/ffmpeg-n9.0.2-982-g836df4e858-win64-lgpl-9.0.zip
+2. SHA-256：`1b60deb4fd8c4f13f987b9df3dbb3abe02eb135f66f080046e9e497f3f748fac`
+3. 解压后将 `bin` 加入 `PATH`，或设置 `ASR_FFMPEG` 为 `ffmpeg.exe` 绝对路径。
+4. 验证：`ffmpeg -version`
 
-~~~powershell
-cd dist\windows-x64
-powershell -ExecutionPolicy Bypass -File .\scripts\windows-generate-checksums.ps1
-powershell -ExecutionPolicy Bypass -File .\scripts\windows-verify-package.ps1
-~~~
+## 3. 第二阶段：部署 OfflineASR
 
-清单覆盖部署目录中的全部文件（不包含清单自身）。验证会检查必要资产、Java 11 x64、FFmpeg、SHA-256、重复路径及未纳入清单的文件。
+1. 解压应用包到固定目录，例如 `C:\offline-asr`。
+2. 执行：
+   ~~~powershell
+   powershell -ExecutionPolicy Bypass -File .\scripts\windows-verify-package.ps1
+   ~~~
+   成功判定：静态自检通过。
+3. 确认环境变量：
+   - `JAVA_HOME`
+   - `ASR_SHERPA_NATIVE_PATH`（未设置时默认 `external\sherpa-onnx-native`）
+   - `ASR_MODEL_DIR`（未设置时默认 `models\SenseVoiceSmall`）
+   - `ASR_FFMPEG` 或 `PATH`
+4. 前台启动：
+   ~~~powershell
+   .\scripts\windows-start.bat
+   ~~~
+5. 浏览器访问 `http://127.0.0.1:8080`。
+6. 健康检查：
+   ~~~powershell
+   curl.exe --fail http://127.0.0.1:8080/api/asr/health
+   ~~~
+   成功判定：`applicationStatus=READY`、`modelLoaded=true`、`ffmpegAvailable=true`。
 
-验证通过后，在当前目录执行以下命令生成交付压缩包：
+## 4. 第三阶段：验收
 
-~~~powershell
-Compress-Archive -Path .\\* -DestinationPath ..\\OfflineASR-windows-x64.zip
-~~~
+1. 使用已授权真实音频调用 `POST /api/asr`，确认返回非空识别结果。
+2. 在 Chrome 中验证麦克风权限、设备选择、录音和上传识别。
+3. 断网后重启服务，重复真实音频识别。
+4. 需要服务化运行时，先获得客户授权，检查 `JAVA_HOME`、`ASR_SHERPA_NATIVE_PATH`、`ASR_MODEL_DIR` 和服务账号权限，再安装 WinSW 服务。WinSW 模板通过 `windows-start.bat` 做 Java 11、Native、模型和 FFmpeg 检查，因此服务账号必须能读取同一组环境变量与目录。
+5. 静态校验不替代 Windows x64 JNI、真实麦克风、断网、服务化和性能验收。
 
-生成清单后不得修改或替换文件。
+## 5. 常见故障
 
-## 5. 客户机部署
+| 现象 | 检查 | 处理 |
+|---|---|---|
+| Java 不是 11 | `java -version`、`JAVA_HOME`、`PATH` | 安装/切换到 Java 11 |
+| `onnxruntime.dll` 或 `sherpa-onnx-jni.dll` 缺失 | `ASR_SHERPA_NATIVE_PATH` | 重新下载/解压对应平台 Native JAR |
+| 模型缺失 | `ASR_MODEL_DIR`、两个必需文件 | 重新下载并解压模型包 |
+| FFmpeg 不可用 | `ffmpeg -version`、`ASR_FFMPEG`、`PATH` | 安装 FFmpeg 或修正路径 |
+| JNI 加载失败 | Native 文件平台/架构、VC++ Runtime | 使用 win-x64 文件并安装运行库 |
 
-1. 解压到固定目录，例如 C:\offline-asr。
-2. 在 PowerShell 中执行 scripts\windows-verify-package.ps1。
-3. 执行 scripts\windows-start.bat 前台启动。
-4. 浏览器访问 http://127.0.0.1:8080。
-5. 执行 scripts\windows-status.bat，确认 READY、模型加载和 FFmpeg 状态。
-6. 使用真实音频完成接口识别、Chrome 麦克风录音和文件上传识别。
-7. 断网后重启服务，再完成一次真实音频识别。
-
-前台验收通过后，如客户需要无人值守运行，再按现场授权安装 WinSW 服务。不要将安装服务作为默认步骤。
-
-## 6. 服务与卸载
-
-服务安装、状态和卸载脚本位于 scripts/。安装前检查 WinSW 版本、配置文件、运行用户和目录权限。卸载服务不应删除模型、配置和日志。
-
-## 7. 安全与验证边界
-
-默认仅监听 127.0.0.1:8080，服务没有用户认证，不要直接暴露公网或不可信局域网。
-
-部署包静态校验不替代目标 Windows 主机的 JNI 加载、真实 Chrome 麦克风、断网和性能测试。每项现场验收标记为通过、失败或未执行。
+默认监听 `127.0.0.1:8080`，服务无用户认证，不得直接暴露公网或不可信局域网。

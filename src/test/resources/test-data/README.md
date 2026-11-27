@@ -44,19 +44,27 @@ powershell -ExecutionPolicy Bypass -File scripts/download-test-data.ps1
 
 ## Maven 真实识别与 CER 评估
 
-先准备模型、当前平台对应的 sherpa-onnx native JAR、FFmpeg 和 15 条音频，再执行：
+先由开发人员自行准备模型、当前平台对应的 Native Runtime、FFmpeg 和 15 条音频。Native Runtime 必须扁平解压到 `external/sherpa-onnx-native/`，模型放入 `models/SenseVoiceSmall/`。
 
-macOS（Apple Silicon）：
+macOS/Linux：
 
 ```bash
-$MAVEN_HOME/bin/mvn -Dasr.accuracy.enabled=true -Dtest=AsrAccuracyTest test
+export ASR_MODEL_DIR="$PWD/models/SenseVoiceSmall"
+export ASR_SHERPA_NATIVE_PATH="$PWD/external/sherpa-onnx-native"
+export ASR_FFMPEG="$(command -v ffmpeg)"
+mvn -Dmaven.repo.local=.m2 -Dasr.accuracy.enabled=true -Dtest=AsrAccuracyTest test
 ```
 
 Windows x64：
 
 ```powershell
-mvn -Pwindows-x64 -Dasr.accuracy.enabled=true -Dtest=AsrAccuracyTest test
+$env:ASR_MODEL_DIR = "$PWD\models\SenseVoiceSmall"
+$env:ASR_SHERPA_NATIVE_PATH = "$PWD\external\sherpa-onnx-native"
+$env:ASR_FFMPEG = (Get-Command ffmpeg.exe -ErrorAction Stop).Source
+mvn -Dmaven.repo.local=.m2 -Dasr.accuracy.enabled=true -Dtest=AsrAccuracyTest test
 ```
+
+真实推理前检查 Native 目录根层同时存在 ONNX Runtime 和 sherpa-onnx JNI 两个库；检查 Java 为 11、FFmpeg 可执行。
 
 测试会逐条识别清单中的音频，输出参考文本、识别文本、单条 CER、整体 CER、音频时长和耗时。CER 使用字符级编辑距离：
 

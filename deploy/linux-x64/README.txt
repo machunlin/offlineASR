@@ -1,27 +1,44 @@
-OfflineASR - Linux x64 离线部署包
+OfflineASR - Linux x64 应用包
 
 目录说明：
-- app/：Spring Boot 应用
-- jdk/：可选的 Java 11 Runtime；正式离线交付时应放入经过许可核验的 Linux x64 Runtime
-- models/SenseVoiceSmall/：SenseVoiceSmall INT8 模型
-- ffmpeg/bin/：可选的 Linux x64 FFmpeg
+- app/：Spring Boot 应用；Fat JAR 仅含 sherpa-onnx Java Wrapper，不含 Native Runtime
 - config/：应用配置
 - logs/、temp/：运行日志和临时音频
-- scripts/：完整性清单生成和校验脚本
+- scripts/：SHA-256 清单生成和校验脚本
+- LICENSE：OfflineASR 项目许可
+- licenses/：第三方许可文本和来源材料
+- third-party/：CycloneDX SBOM、Maven 依赖/许可证清单
+
+本应用包不包含：
+- Java Runtime/JDK
+- sherpa-onnx JNI 和 ONNX Runtime Native
+- SenseVoiceSmall 模型
+- FFmpeg
 
 构建机：
-1. 在 Linux x64 构建机运行 bash scripts/linux-package.sh。
-2. 将经许可核验的 Java 11 Runtime 放入 jdk/。
-3. 将 model.int8.onnx 和 tokens.txt 放入 models/SenseVoiceSmall/。
-4. 将 Linux x64 ffmpeg 可执行文件放入 ffmpeg/bin/ffmpeg，并赋予执行权限。
-5. 执行 scripts/linux-generate-checksums.sh，再执行 scripts/linux-verify-package.sh。
-6. 校验通过后，将整个目录压缩交付；不要在生成清单后再修改或替换任何文件。
+1. 安装 Java 11、Maven、Node.js 20、python3。
+2. 运行 bash scripts/linux-package.sh。
+3. 脚本只构建应用并组装应用包，不下载或复制第三方运行资产。
+4. 生成 checksums.sha256 后不得再替换或修改包内文件。
 
-目标机：
-1. 解压到 /opt/offline-asr，确保部署用户对目录有读写权限。
-2. 执行 ./scripts/linux-verify-package.sh。
-3. 执行 ./linux-start.sh 前台启动并完成健康检查和真实音频识别。
-4. 需要 systemd 时，先按部署手册检查服务用户、路径和权限，再由授权人员安装模板。
+目标机第一阶段（客户准备环境）：
+1. 安装 Java 11，执行 java -version。
+2. 下载 sherpa-onnx 2.0.3 linux-x64 Native JAR，扁平解压到 external/sherpa-onnx-native/，根层必须包含 libonnxruntime.so 和 libsherpa-onnx-jni.so。
+3. 下载 SenseVoiceSmall INT8 2025-09-09，解压到 models/SenseVoiceSmall/，根层必须包含 model.int8.onnx 和 tokens.txt。
+4. 安装 FFmpeg，执行 ffmpeg -version。
+5. 版本、直接下载地址、SHA-256 和许可状态见 docs/08-第三方组件与许可证清单.md。
 
-默认仅监听 127.0.0.1:8080。当前服务没有用户认证，不要直接暴露公网或不可信局域网。
-若未随包提供 jdk/ 或 ffmpeg/bin/，目标机必须预装 Java 11 或 FFmpeg；这不属于完整离线交付包。
+目标机第二阶段（部署应用）：
+1. 解压到 /opt/offline-asr，确保服务用户对目录有读写权限。
+2. 运行 ./scripts/linux-verify-package.sh。
+3. 运行 ./linux-start.sh 前台启动，检查 GET /api/asr/health。
+4. 成功判定：applicationStatus=READY、modelLoaded=true、ffmpegAvailable=true。
+
+目标机第三阶段（验收）：
+1. 使用真实音频调用 POST /api/asr。
+2. 验证 Chrome 麦克风、文件上传和识别。
+3. 断网重启后重复识别。
+4. 需要 systemd 时，先获得授权并检查服务用户、路径和权限。
+
+默认仅监听 127.0.0.1:8080。服务没有用户认证，不要直接暴露公网或不可信局域网。
+SenseVoiceSmall 模型和 FFmpeg 仍有待确认的许可边界；不得宣称已完成商业再分发授权。

@@ -9,6 +9,8 @@ Group=offline-asr
 WorkingDirectory=/opt/offline-asr
 Environment=JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
 Environment=ASR_HOST=127.0.0.1
+Environment=ASR_MODEL_DIR=/opt/offline-asr/models/SenseVoiceSmall
+Environment=ASR_SHERPA_NATIVE_PATH=/opt/offline-asr/external/sherpa-onnx-native
 ExecStart=/opt/offline-asr/linux-start.sh
 Restart=on-failure
 RestartSec=5

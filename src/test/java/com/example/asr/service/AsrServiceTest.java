@@ -73,12 +73,15 @@ class AsrServiceTest {
     @EnabledIfSystemProperty(named = "asr.accuracy.enabled", matches = "true")
     void recognizesBundledChineseAudioAndPrintsRecognizedText() throws Exception {
         AsrProperties properties = new AsrProperties();
+        properties.setModelDirectory(System.getenv().getOrDefault("ASR_MODEL_DIR", "models/SenseVoiceSmall"));
+        properties.setFfmpegCommand(System.getenv().getOrDefault("ASR_FFMPEG", "ffmpeg"));
         properties.setMaxDurationSeconds(60);
+        configureNativePathFromEnvironment();
 
         SherpaOnnxAsrEngine engine = new SherpaOnnxAsrEngine(properties);
         try {
             assertTrue(engine.isReady(),
-                    "SenseVoice 模型或 sherpa-onnx 原生库未就绪，请检查 models/SenseVoiceSmall 和当前平台 native JAR");
+                    "SenseVoice 模型或 Native Runtime 未就绪，请检查 ASR_MODEL_DIR 和 ASR_SHERPA_NATIVE_PATH");
 
             FfmpegAudioDecoder decoder = new FfmpegAudioDecoder(
                     properties,
@@ -93,6 +96,14 @@ class AsrServiceTest {
             recognizeFixture(service, "example_zh.wav", "chinese-sample-001");
         } finally {
             engine.close();
+        }
+    }
+
+    private void configureNativePathFromEnvironment() {
+        String nativePath = System.getenv("ASR_SHERPA_NATIVE_PATH");
+        if (nativePath != null && !nativePath.isBlank()) {
+            System.setProperty("sherpa_onnx.native.path",
+                    Path.of(nativePath).toAbsolutePath().normalize().toString());
         }
     }
 

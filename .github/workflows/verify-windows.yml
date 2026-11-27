@@ -19,17 +19,23 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-      - name: 检查启动脚本语法
-        run: bash -n scripts/mac-start.sh scripts/verify-stage-three.sh scripts/download-linux-native.sh scripts/linux-package.sh scripts/linux-start.sh scripts/linux-generate-checksums.sh scripts/linux-verify-package.sh scripts/download-test-data.sh
-      - name: 构建 macOS ARM64 并运行测试
-        run: mvn -B -Pmacos-arm64 -Dmaven.repo.local=.m2 clean test package
-      - name: 验证浏览器 JavaScript 契约
-        run: node scripts/verify-js-contract.mjs
-      - name: 验证 macOS 原生库打包
+      - name: 检查 Shell 与 Node 脚本语法
         run: |
-          jar tf target/offline-asr-0.1.0-SNAPSHOT.jar | grep -q 'BOOT-INF/lib/sherpa-onnx-native-lib-osx-aarch64-2.0.3.jar'
-          if jar tf target/offline-asr-0.1.0-SNAPSHOT.jar | grep -Eq 'linux-x64|win-x64'; then
-            echo "macOS 包含其他平台原生库" >&2
+          while IFS= read -r file; do bash -n "$file"; done < <(find scripts -name '*.sh' -type f | sort)
+          node --check scripts/normalize-maven-bom.mjs
+          node --check scripts/verify-maven-inventory.mjs
+          node --check scripts/export-maven-licenses.mjs
+      - name: 构建并运行 Java 测试
+        run: mvn -B -Dmaven.repo.local=.m2 clean test package
+      - name: 验证浏览器 JavaScript 与 SDK 契约
+        run: |
+          node scripts/verify-js-contract.mjs
+          node scripts/verify-sdk-contract.mjs
+      - name: 验证 Fat JAR 依赖边界
+        run: |
+          jar tf target/offline-asr-0.1.0-SNAPSHOT.jar | grep -q 'BOOT-INF/lib/sherpa-onnx-jvm-2.0.3.jar'
+          if jar tf target/offline-asr-0.1.0-SNAPSHOT.jar | grep -Eq 'sherpa-onnx-native-lib-'; then
+            echo "Fat JAR 不应包含外部 Native Runtime" >&2
             exit 1
           fi
 
@@ -47,22 +53,33 @@ jobs:
           node-version: "20"
       - name: 安装 FFmpeg
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
-      - name: 检查 Linux 脚本语法
-        run: bash -n scripts/linux-package.sh scripts/linux-start.sh scripts/linux-generate-checksums.sh scripts/linux-verify-package.sh scripts/download-linux-native.sh scripts/verify-stage-three.sh
-      - name: 执行 Linux 部署包构建脚本（含 Java 测试）
+      - name: 检查 Shell 与 Node 脚本语法
+        run: |
+          while IFS= read -r file; do bash -n "$file"; done < <(find scripts -name '*.sh' -type f | sort)
+          node --check scripts/normalize-maven-bom.mjs
+          node --check scripts/verify-maven-inventory.mjs
+          node --check scripts/export-maven-licenses.mjs
+      - name: 构建并组装 Linux 应用包
         run: bash scripts/linux-package.sh
-      - name: 验证 Linux 部署包和原生库隔离
+      - name: 验证 Linux 应用包和 Native Runtime 隔离
         run: |
           test -f dist/linux-x64/app/offline-asr.jar
           test -f dist/linux-x64/config/application.yml
           test -f dist/linux-x64/scripts/linux-generate-checksums.sh
-          jar tf dist/linux-x64/app/offline-asr.jar | grep -q 'BOOT-INF/lib/sherpa-onnx-native-lib-linux-x64-2.0.3.jar'
-          if jar tf dist/linux-x64/app/offline-asr.jar | grep -Eq 'osx-aarch64|win-x64'; then
-            echo "Linux 包含其他平台原生库" >&2
+          test -f dist/linux-x64/offline-asr.service
+          test -f dist/linux-x64/LICENSE
+          test -f dist/linux-x64/THIRD_PARTY_NOTICES.md
+          test -f dist/linux-x64/licenses/sherpa-onnx-LICENSE
+          test -f dist/linux-x64/third-party/sbom-linux-x64.cdx.json
+          test -f dist/linux-x64/checksums.sha256
+          if jar tf dist/linux-x64/app/offline-asr.jar | grep -Eq 'sherpa-onnx-native-lib-|onnxruntime|sherpa-onnx-jni'; then
+            echo "Linux 应用 JAR 包含外部 Native Runtime" >&2
             exit 1
           fi
-      - name: 验证浏览器 JavaScript 契约
-        run: node scripts/verify-js-contract.mjs
+      - name: 验证浏览器 JavaScript 与 SDK 契约
+        run: |
+          node scripts/verify-js-contract.mjs
+          node scripts/verify-sdk-contract.mjs
 
   windows-x64:
     runs-on: windows-latest
@@ -76,47 +93,50 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-      - name: Parse Windows deployment scripts
+      - name: 检查 PowerShell 与 Node 脚本语法
         shell: pwsh
         run: |
-          $files = @("scripts/windows-generate-checksums.ps1", "scripts/windows-verify-package.ps1", "scripts/download-test-data.ps1")
+          $files = Get-ChildItem -LiteralPath scripts -Filter *.ps1 -File | ForEach-Object { $_.FullName }
           foreach ($file in $files) {
             $tokens = $null
             $errors = $null
-            [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path $file), [ref]$tokens, [ref]$errors) | Out-Null
+            [System.Management.Automation.Language.Parser]::ParseFile($file, [ref]$tokens, [ref]$errors) | Out-Null
             if ($errors.Count -gt 0) { throw ($errors | Out-String) }
           }
-      - name: Run Java tests and build Windows x64 package
-        shell: pwsh
-        run: mvn -B -Pwindows-x64 "-Dmaven.repo.local=.m2" clean test package
-      - name: Verify Windows native library packaging
-        shell: pwsh
-        run: |
-          $jar = "target/offline-asr-0.1.0-SNAPSHOT.jar"
-          $entries = & jar tf $jar
-          if ($LASTEXITCODE -ne 0) { throw "Unable to inspect package" }
-          if (-not ($entries -contains "BOOT-INF/lib/sherpa-onnx-native-lib-win-x64-2.0.3.jar")) {
-            throw "Windows x64 native library is missing from package"
-          }
-          $otherEntries = $entries | Where-Object { $_ -match "osx-aarch64|linux-x64" }
-          if ($otherEntries) { throw "Windows package contains another platform native library" }
-      - name: Assemble Windows x64 deployment package
+          node --check scripts/normalize-maven-bom.mjs
+          node --check scripts/verify-maven-inventory.mjs
+          node --check scripts/export-maven-licenses.mjs
+      - name: 构建并组装 Windows 应用包
         shell: cmd
-        env:
-          ASR_SKIP_MAVEN_BUILD: "1"
         run: scripts\windows-package.bat
-      - name: Verify Windows deployment package layout
+      - name: 验证 Windows 应用包和 Native Runtime 隔离
         shell: pwsh
         run: |
           $required = @(
             "dist/windows-x64/app/offline-asr.jar",
             "dist/windows-x64/config/application.yml",
             "dist/windows-x64/scripts/windows-start.bat",
-            "dist/windows-x64/scripts/windows-generate-checksums.ps1",
-            "dist/windows-x64/scripts/windows-verify-package.ps1"
+            "dist/windows-x64/scripts/windows-diagnose.bat",
+            "dist/windows-x64/scripts/offline-asr.xml",
+            "dist/windows-x64/LICENSE",
+            "dist/windows-x64/THIRD_PARTY_NOTICES.md",
+            "dist/windows-x64/licenses/sherpa-onnx-LICENSE",
+            "dist/windows-x64/third-party/sbom-windows-x64.cdx.json",
+            "dist/windows-x64/checksums.sha256"
           )
           foreach ($path in $required) {
-            if (-not (Test-Path $path -PathType Leaf)) { throw "Missing package file: $path" }
+            if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "Missing package file: $path" }
           }
-      - name: Run browser JavaScript contract tests
-        run: node scripts/verify-js-contract.mjs
+          $jar = "dist/windows-x64/app/offline-asr.jar"
+          $entries = & jar tf $jar
+          if ($LASTEXITCODE -ne 0) { throw "Unable to inspect package" }
+          if (-not ($entries -contains "BOOT-INF/lib/sherpa-onnx-jvm-2.0.3.jar")) {
+            throw "Application JAR does not contain the sherpa-onnx Java Wrapper"
+          }
+          if ($entries | Where-Object { $_ -match "sherpa-onnx-native-lib-|onnxruntime|sherpa-onnx-jni" }) {
+            throw "Application JAR must not contain external Native Runtime"
+          }
+      - name: 验证浏览器 JavaScript 与 SDK 契约
+        run: |
+          node scripts/verify-js-contract.mjs
+          node scripts/verify-sdk-contract.mjs
