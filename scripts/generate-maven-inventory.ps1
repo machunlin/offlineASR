@@ -10,8 +10,12 @@ $ErrorActionPreference = 'Stop'
 $Root = (Resolve-Path -LiteralPath $Root).Path
 
 $java = if ($env:JAVA_HOME) { Join-Path $env:JAVA_HOME 'bin/java.exe' } else { (Get-Command java.exe -ErrorAction Stop).Source }
+$previousErrorActionPreference = $ErrorActionPreference
+$ErrorActionPreference = 'Continue'
 $javaVersion = (& $java -version 2>&1 | Out-String)
-if ($javaVersion -notmatch 'version "11') {
+$javaExitCode = $LASTEXITCODE
+$ErrorActionPreference = $previousErrorActionPreference
+if ($javaExitCode -ne 0 -or $javaVersion -notmatch 'version "11') {
     throw 'Maven 依赖清单生成要求 Java 11，请检查 JAVA_HOME/PATH'
 }
 $mvn = if ($env:MAVEN_HOME) { Join-Path $env:MAVEN_HOME 'bin/mvn.cmd' } else { (Get-Command mvn.cmd -ErrorAction Stop).Source }
