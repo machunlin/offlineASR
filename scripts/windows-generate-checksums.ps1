@@ -6,8 +6,14 @@ param(
 $ErrorActionPreference = 'Stop'
 $Root = (Resolve-Path -LiteralPath $Root).Path
 $manifestPath = Join-Path $Root 'checksums.sha256'
+$logsPrefix = (Join-Path $Root 'logs').TrimEnd('\') + '\'
+$tempPrefix = (Join-Path $Root 'temp').TrimEnd('\') + '\'
 $files = Get-ChildItem -LiteralPath $Root -File -Recurse |
-    Where-Object { $_.FullName -ne $manifestPath } |
+    Where-Object {
+        $_.FullName -ne $manifestPath -and
+        -not $_.FullName.StartsWith($logsPrefix, [System.StringComparison]::OrdinalIgnoreCase) -and
+        -not $_.FullName.StartsWith($tempPrefix, [System.StringComparison]::OrdinalIgnoreCase)
+    } |
     Sort-Object FullName
 
 if ($files.Count -lt 5) {
@@ -23,4 +29,4 @@ foreach ($file in $files) {
 
 Set-Content -LiteralPath $manifestPath -Value $lines -Encoding UTF8
 Write-Host "已生成完整部署包 SHA-256 清单：$manifestPath"
-Write-Host "纳入文件数量：$($files.Count)"
+Write-Host "纳入文件数量：$($files.Count)（不含运行时 logs/、temp/）"

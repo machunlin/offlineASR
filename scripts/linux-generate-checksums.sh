@@ -11,7 +11,7 @@ cd "${ROOT}"
 while IFS= read -r -d '' file; do
     relative="${file#./}"
     sha256sum -- "${relative}" >> "${TMP_FILE}"
-done < <(find . -type f ! -name 'checksums.sha256' -print0 | sort -z)
+done < <(find . -type f ! -name 'checksums.sha256' ! -path './logs/*' ! -path './temp/*' -print0 | sort -z)
 
 if [[ ! -s "${TMP_FILE}" ]]; then
     echo "没有找到可纳入校验清单的文件" >&2

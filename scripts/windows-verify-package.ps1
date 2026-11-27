@@ -75,8 +75,14 @@ if ($verifiedCount -lt 5) {
     throw "哈希清单资产数量不足，实际 $verifiedCount 项"
 }
 
+$logsPrefix = (Join-Path $Root 'logs').TrimEnd('\') + '\'
+$tempPrefix = (Join-Path $Root 'temp').TrimEnd('\') + '\'
 $actualFiles = Get-ChildItem -LiteralPath $Root -File -Recurse |
-    Where-Object { $_.FullName -ne $manifestPath }
+    Where-Object {
+        $_.FullName -ne $manifestPath -and
+        -not $_.FullName.StartsWith($logsPrefix, [System.StringComparison]::OrdinalIgnoreCase) -and
+        -not $_.FullName.StartsWith($tempPrefix, [System.StringComparison]::OrdinalIgnoreCase)
+    }
 foreach ($file in $actualFiles) {
     $relativePath = $file.FullName.Substring($Root.Length).TrimStart('\', '/')
     if (-not $listed.ContainsKey($relativePath)) {

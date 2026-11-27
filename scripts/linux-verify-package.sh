@@ -83,7 +83,7 @@ while IFS= read -r -d '' file; do
         echo "发现未纳入哈希清单的文件：${relative}" >&2
         exit 1
     }
-done < <(find "${ROOT}" -type f -print0)
+done < <(find "${ROOT}" -type f ! -path "${ROOT}/logs/*" ! -path "${ROOT}/temp/*" -print0)
 
 echo "Linux 离线部署包静态自检通过，已验证 ${verified} 个文件。"
 echo "注意：该检查不替代目标 Linux 主机上的 JNI、音频识别及断网实机测试。"
