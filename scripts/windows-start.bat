@@ -33,7 +33,7 @@ if not exist "%CONFIG_FILE%" (
 )
 
 if not defined ASR_HOST set "ASR_HOST=127.0.0.1"
-if not defined ASR_MAX_DURATION_SECONDS set "ASR_MAX_DURATION_SECONDS=60"
+if not defined ASR_MAX_DURATION_SECONDS set "ASR_MAX_DURATION_SECONDS=600"
 set "ASR_MODEL_DIR=%MODEL_DIR%"
 set "ASR_FFMPEG=%FFMPEG_EXE%"
 if not exist "%ROOT%\logs" mkdir "%ROOT%\logs"
